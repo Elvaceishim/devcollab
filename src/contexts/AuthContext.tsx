@@ -19,6 +19,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+
+    // Initialize with demo accounts if none exist
+    const users = JSON.parse(localStorage.getItem('devcollab_users') || '[]');
+    if (users.length === 0) {
+      const demoUsers = [
+        {
+          id: 'demo-user-1',
+          email: 'demo@devcollab.com',
+          password: 'demo123',
+          name: 'Demo User',
+          bio: 'Full-stack developer passionate about creating amazing web applications.',
+          location: 'San Francisco, CA',
+          skills: ['React', 'Node.js', 'TypeScript', 'MongoDB'],
+          experience: 'Senior',
+          github: 'demouser',
+          linkedin: 'demouser',
+          portfolio: 'https://demouser.dev',
+          availability: 'Available',
+          joinedAt: new Date().toISOString(),
+        },
+        {
+          id: 'demo-user-2',
+          email: 'jane@devcollab.com',
+          password: 'jane123',
+          name: 'Jane Smith',
+          bio: 'Frontend specialist with a passion for UI/UX design and modern web technologies.',
+          location: 'New York, NY',
+          skills: ['React', 'Vue.js', 'CSS', 'Figma', 'JavaScript'],
+          experience: 'Mid-level',
+          github: 'janesmith',
+          availability: 'Available',
+          joinedAt: new Date().toISOString(),
+        },
+        {
+          id: 'demo-user-3',
+          email: 'alex@devcollab.com',
+          password: 'alex123',
+          name: 'Alex Johnson',
+          bio: 'Backend engineer specializing in scalable systems and cloud architecture.',
+          location: 'Austin, TX',
+          skills: ['Python', 'Django', 'AWS', 'Docker', 'PostgreSQL'],
+          experience: 'Senior',
+          availability: 'Busy',
+          joinedAt: new Date().toISOString(),
+        }
+      ];
+      localStorage.setItem('devcollab_users', JSON.stringify(demoUsers));
+    }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
