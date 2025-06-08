@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, Clock, DollarSign, Sync } from 'lucide-react';
+import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, Clock, DollarSign, FolderSync as Sync } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
