@@ -29,11 +29,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         {user && <Header />}
         <Routes>
-          <Route path="/" element={
-            <PublicRoute>
-              <Hero />
-            </PublicRoute>
-          } />
+          <Route path="/" element={<Hero />} />
           <Route path="/auth" element={
             <PublicRoute>
               <LoginForm />
