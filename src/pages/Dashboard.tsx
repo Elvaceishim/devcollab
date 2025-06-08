@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Clock, Users, DollarSign, Sparkles } from 'lucide-react';
+import { Plus, Search, Filter, Clock, Users, DollarSign, Sparkles, UserCheck, Bell } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import ProjectModal from '../components/projects/ProjectModal';
 import ApplicationModal from '../components/projects/ApplicationModal';
+import ApplicationsModal from '../components/projects/ApplicationsModal';
 import { Project } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -13,11 +14,18 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showApplicationsModal, setShowApplicationsModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
+  const [viewMode, setViewMode] = useState<'all' | 'my-projects'>('all');
 
-  const filteredProjects = projects.filter(project => {
+  const myProjects = projects.filter(project => project.ownerId === user?.id);
+  const otherProjects = projects.filter(project => project.ownerId !== user?.id);
+  
+  const displayProjects = viewMode === 'my-projects' ? myProjects : otherProjects;
+
+  const filteredProjects = displayProjects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -30,6 +38,11 @@ const Dashboard: React.FC = () => {
   const handleApplyClick = (project: Project) => {
     setSelectedProject(project);
     setShowApplicationModal(true);
+  };
+
+  const handleViewApplications = (project: Project) => {
+    setSelectedProject(project);
+    setShowApplicationsModal(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -70,6 +83,8 @@ const Dashboard: React.FC = () => {
     return 'Apply to Join';
   };
 
+  const totalApplications = myProjects.reduce((total, project) => total + project.applicants.length, 0);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -78,14 +93,58 @@ const Dashboard: React.FC = () => {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-primary-800 to-secondary-800 bg-clip-text text-transparent mb-2">
               Project Dashboard
             </h1>
-            <p className="text-gray-600 text-lg">Discover and join exciting development projects</p>
+            <p className="text-gray-600 text-lg">
+              {viewMode === 'my-projects' ? 'Manage your projects and applications' : 'Discover and join exciting development projects'}
+            </p>
           </div>
-          <Button 
-            onClick={() => setShowCreateModal(true)} 
-            className="mt-4 sm:mt-0 bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+          <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+            {totalApplications > 0 && (
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  onClick={() => setViewMode('my-projects')}
+                  className="relative"
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  Applications
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {totalApplications}
+                  </span>
+                </Button>
+              </div>
+            )}
+            <Button 
+              onClick={() => setShowCreateModal(true)} 
+              className="bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Project
+            </Button>
+          </div>
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex items-center space-x-2 mb-6">
+          <Button
+            variant={viewMode === 'all' ? 'primary' : 'outline'}
+            onClick={() => setViewMode('all')}
+            size="sm"
+            className="rounded-xl"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Project
+            All Projects
+          </Button>
+          <Button
+            variant={viewMode === 'my-projects' ? 'primary' : 'outline'}
+            onClick={() => setViewMode('my-projects')}
+            size="sm"
+            className="rounded-xl relative"
+          >
+            My Projects
+            {totalApplications > 0 && (
+              <span className="ml-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {totalApplications}
+              </span>
+            )}
           </Button>
         </div>
 
@@ -125,9 +184,19 @@ const Dashboard: React.FC = () => {
                     {project.type}
                   </span>
                 </div>
-                {project.type === 'Startup' && (
-                  <Sparkles className="h-5 w-5 text-purple-500" />
-                )}
+                <div className="flex items-center space-x-2">
+                  {project.type === 'Startup' && (
+                    <Sparkles className="h-5 w-5 text-purple-500" />
+                  )}
+                  {viewMode === 'my-projects' && project.applicants.length > 0 && (
+                    <div className="relative">
+                      <Bell className="h-5 w-5 text-orange-500" />
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-3 w-3 flex items-center justify-center">
+                        {project.applicants.length}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">{project.title}</h3>
@@ -171,20 +240,44 @@ const Dashboard: React.FC = () => {
                 <p className="font-semibold text-gray-900">{project.ownerName}</p>
               </div>
 
-              <div className="mt-4">
-                <Button 
-                  variant={canApplyToProject(project) ? "primary" : "outline"}
-                  size="sm" 
-                  className={`w-full rounded-xl transition-all duration-300 ${
-                    canApplyToProject(project) 
-                      ? 'bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 shadow-md hover:shadow-lg' 
-                      : 'border-gray-300 text-gray-500'
-                  }`}
-                  disabled={!canApplyToProject(project)}
-                  onClick={() => canApplyToProject(project) && handleApplyClick(project)}
-                >
-                  {getButtonText(project)}
-                </Button>
+              <div className="mt-4 space-y-2">
+                {viewMode === 'my-projects' ? (
+                  <>
+                    {project.applicants.length > 0 && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full rounded-xl bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-md hover:shadow-lg"
+                        onClick={() => handleViewApplications(project)}
+                      >
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        View Applications ({project.applicants.length})
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline"
+                      size="sm" 
+                      className="w-full rounded-xl border-gray-300 text-gray-600"
+                      disabled
+                    >
+                      Your Project
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    variant={canApplyToProject(project) ? "primary" : "outline"}
+                    size="sm" 
+                    className={`w-full rounded-xl transition-all duration-300 ${
+                      canApplyToProject(project) 
+                        ? 'bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 shadow-md hover:shadow-lg' 
+                        : 'border-gray-300 text-gray-500'
+                    }`}
+                    disabled={!canApplyToProject(project)}
+                    onClick={() => canApplyToProject(project) && handleApplyClick(project)}
+                  >
+                    {getButtonText(project)}
+                  </Button>
+                )}
               </div>
             </Card>
           ))}
@@ -195,8 +288,15 @@ const Dashboard: React.FC = () => {
             <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
               <Search className="h-12 w-12 text-gray-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No projects found</h3>
-            <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {viewMode === 'my-projects' ? 'No projects created yet' : 'No projects found'}
+            </h3>
+            <p className="text-gray-600">
+              {viewMode === 'my-projects' 
+                ? 'Create your first project to start collaborating with other developers'
+                : 'Try adjusting your search or filter criteria'
+              }
+            </p>
           </div>
         )}
 
@@ -211,6 +311,16 @@ const Dashboard: React.FC = () => {
               setShowApplicationModal(false);
               setSelectedProject(null);
             }} 
+          />
+        )}
+
+        {showApplicationsModal && selectedProject && (
+          <ApplicationsModal
+            project={selectedProject}
+            onClose={() => {
+              setShowApplicationsModal(false);
+              setSelectedProject(null);
+            }}
           />
         )}
       </div>
