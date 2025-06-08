@@ -31,6 +31,24 @@ const LoginForm: React.FC = () => {
     }
   };
 
+  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setLoading(true);
+    setError('');
+
+    try {
+      const success = await login(demoEmail, demoPassword);
+      if (!success) {
+        setError('Demo login failed');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 px-4 relative overflow-hidden">
       {/* Floating Elements */}
@@ -53,6 +71,38 @@ const LoginForm: React.FC = () => {
         </div>
 
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-gray-200/50">
+          {/* Demo Accounts Section */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+            <h3 className="text-sm font-semibold text-blue-900 mb-3">🚀 Try Demo Accounts</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => handleDemoLogin('demo@devcollab.com', 'demo123')}
+                className="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-50 transition-colors text-sm"
+                disabled={loading}
+              >
+                <div className="font-medium text-blue-900">Demo User</div>
+                <div className="text-blue-600 text-xs">demo@devcollab.com • Senior Developer</div>
+              </button>
+              <button
+                onClick={() => handleDemoLogin('jane@devcollab.com', 'jane123')}
+                className="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-50 transition-colors text-sm"
+                disabled={loading}
+              >
+                <div className="font-medium text-blue-900">Jane Smith</div>
+                <div className="text-blue-600 text-xs">jane@devcollab.com • Frontend Specialist</div>
+              </button>
+            </div>
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or sign in with your account</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="relative">
               <Input
@@ -108,12 +158,6 @@ const LoginForm: React.FC = () => {
                 <Link to="/signup" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
                   Sign up
                 </Link>
-              </p>
-            </div>
-
-            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-              <p className="text-xs text-blue-700 text-center font-medium">
-                💡 Demo Tip: Create an account first, then sign in with your credentials
               </p>
             </div>
           </form>
