@@ -5,7 +5,7 @@ interface DataContextType {
   projects: Project[];
   messages: Message[];
   users: User[];
-  createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants' | 'tasks' | 'discussions' | 'icebreakerChallenges'>) => void;
+  createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants' | 'tasks' | 'discussions' | 'icebreakerChallenges' | 'difficulty' | 'timeCommitment' | 'tags'>) => void;
   applyToProject: (projectId: string, userId: string) => void;
   acceptApplication: (projectId: string, userId: string) => void;
   sendMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
@@ -15,6 +15,8 @@ interface DataContextType {
   replyToDiscussion: (discussionId: string, reply: Omit<DiscussionReply, 'id' | 'createdAt'>) => void;
   calculateTrendingScores: () => void;
   getProjectRecommendations: (userId: string) => Project[];
+  connectWithDeveloper: (userId: string, targetUserId: string) => void;
+  sendConnectionRequest: (fromUserId: string, toUserId: string, message?: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -39,23 +41,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUsers = localStorage.getItem('devcollab_users');
 
     if (savedProjects) {
-      setProjects(JSON.parse(savedProjects));
+      try {
+        const projectsData = JSON.parse(savedProjects);
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        setProjects([]);
+      }
     }
 
     if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
+      try {
+        const messagesData = JSON.parse(savedMessages);
+        setMessages(messagesData);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        setMessages([]);
+      }
     }
 
     if (savedUsers) {
-      const usersData = JSON.parse(savedUsers);
-      setUsers(usersData.map(({ password, ...user }: any) => user));
+      try {
+        const usersData = JSON.parse(savedUsers);
+        setUsers(usersData.map(({ password, ...user }: any) => user));
+      } catch (error) {
+        console.error('Error loading users:', error);
+        setUsers([]);
+      }
     }
 
     // Calculate trending scores on load
-    calculateTrendingScores();
+    setTimeout(() => calculateTrendingScores(), 100);
   }, []);
 
-  const createProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants' | 'tasks' | 'discussions' | 'icebreakerChallenges'>) => {
+  const createProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants' | 'tasks' | 'discussions' | 'icebreakerChallenges' | 'difficulty' | 'timeCommitment' | 'tags'>) => {
     const newProject: Project = {
       ...projectData,
       id: Math.random().toString(36).substr(2, 9),
@@ -64,13 +83,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tasks: [],
       discussions: [],
       icebreakerChallenges: [],
+      difficulty: 'Intermediate',
+      timeCommitment: 'flexible',
+      tags: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     const updatedProjects = [...projects, newProject];
     setProjects(updatedProjects);
-    localStorage.setItem('devcollab_projects', JSON.stringify(updatedProjects));
+    
+    try {
+      localStorage.setItem('devcollab_projects', JSON.stringify(updatedProjects));
+      console.log('Project created successfully:', newProject.title);
+    } catch (error) {
+      console.error('Error saving project:', error);
+    }
   };
 
   const applyToProject = (projectId: string, userId: string) => {
@@ -244,6 +272,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .slice(0, 10);
   };
 
+  const connectWithDeveloper = (userId: string, targetUserId: string) => {
+    // Implementation for connecting with developers
+    console.log(`User ${userId} connecting with ${targetUserId}`);
+  };
+
+  const sendConnectionRequest = (fromUserId: string, toUserId: string, message?: string) => {
+    // Implementation for sending connection requests
+    console.log(`Connection request from ${fromUserId} to ${toUserId}: ${message}`);
+  };
+
   return (
     <DataContext.Provider value={{
       projects,
@@ -259,6 +297,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       replyToDiscussion,
       calculateTrendingScores,
       getProjectRecommendations,
+      connectWithDeveloper,
+      sendConnectionRequest,
     }}>
       {children}
     </DataContext.Provider>

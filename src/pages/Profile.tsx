@@ -6,6 +6,7 @@ import Input from '../components/common/Input';
 import Card from '../components/common/Card';
 import BadgeSystem from '../components/badges/BadgeSystem';
 import EndorsementSystem from '../components/endorsements/EndorsementSystem';
+import GitHubIntegration from '../components/github/GitHubIntegration';
 
 const Profile: React.FC = () => {
   const { user, updateProfile, syncGitHubRepos } = useAuth();
@@ -192,27 +193,8 @@ const Profile: React.FC = () => {
             </div>
           </Card>
 
-          {/* GitHub Repos */}
-          {user.githubRepos && user.githubRepos.length > 0 && (
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">GitHub Repositories</h3>
-              <div className="space-y-3">
-                {user.githubRepos.slice(0, 3).map(repo => (
-                  <div key={repo.id} className="border border-gray-200 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">{repo.name}</h4>
-                      <span className="text-xs text-gray-500">{repo.language}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{repo.description}</p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>⭐ {repo.stars}</span>
-                      <span>🍴 {repo.forks}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
+          {/* GitHub Integration */}
+          <GitHubIntegration />
 
           {/* Badges */}
           <BadgeSystem user={user} badges={user.badges} />
@@ -320,6 +302,20 @@ const Profile: React.FC = () => {
                   </p>
                 )}
               </div>
+
+              {isEditing && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Skills
+                  </label>
+                  <Input
+                    name="skills"
+                    value={formData.skills}
+                    onChange={handleChange}
+                    placeholder="React, Node.js, Python (comma-separated)"
+                  />
+                </div>
+              )}
             </div>
           </Card>
 
