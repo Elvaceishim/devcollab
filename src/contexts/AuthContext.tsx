@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthContextType } from '../types';
+import { User, AuthContextType, Badge, Endorsement } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -17,7 +17,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const savedUser = localStorage.getItem('devcollab_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const userData = JSON.parse(savedUser);
+      // Ensure new fields exist
+      setUser({
+        ...userData,
+        badges: userData.badges || [],
+        endorsements: userData.endorsements || [],
+        githubRepos: userData.githubRepos || [],
+        quizResults: userData.quizResults || [],
+        preferences: userData.preferences || {}
+      });
     }
   }, []);
 
@@ -32,8 +41,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('devcollab_user', JSON.stringify(userWithoutPassword));
+      const enhancedUser = {
+        ...userWithoutPassword,
+        badges: userWithoutPassword.badges || [],
+        endorsements: userWithoutPassword.endorsements || [],
+        githubRepos: userWithoutPassword.githubRepos || [],
+        quizResults: userWithoutPassword.quizResults || [],
+        preferences: userWithoutPassword.preferences || {}
+      };
+      setUser(enhancedUser);
+      localStorage.setItem('devcollab_user', JSON.stringify(enhancedUser));
       return true;
     }
     return false;
@@ -63,6 +80,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       portfolio: userData.portfolio || '',
       availability: 'Available',
       joinedAt: new Date().toISOString(),
+      badges: [],
+      endorsements: [],
+      githubRepos: [],
+      quizResults: [],
+      preferences: {}
     };
 
     users.push({ ...newUser, password: userData.password });
@@ -93,8 +115,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('devcollab_users', JSON.stringify(updatedUsers));
   };
 
+  const endorseSkill = (userId: string, skill: string, message?: string) => {
+    if (!user) return;
+
+    const endorsement: Endorsement = {
+      id: Math.random().toString(36).substr(2, 9),
+      skill,
+      endorserId: user.id,
+      endorserName: user.name,
+      message,
+      createdAt: new Date().toISOString()
+    };
+
+    // Update the endorsed user's profile
+    const users = JSON.parse(localStorage.getItem('devcollab_users') || '[]');
+    const updatedUsers = users.map((u: User & { password: string }) => {
+      if (u.id === userId) {
+        const endorsements = u.endorsements || [];
+        return {
+          ...u,
+          endorsements: [...endorsements, endorsement]
+        };
+      }
+      return u;
+    });
+
+    localStorage.setItem('devcollab_users', JSON.stringify(updatedUsers));
+  };
+
+  const syncGitHubRepos = async () => {
+    if (!user?.github) return;
+    
+    // Simulate GitHub API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Mock GitHub repos data
+    const mockRepos = [
+      {
+        id: '1',
+        name: 'awesome-project',
+        description: 'A really awesome project built with React',
+        language: 'JavaScript',
+        stars: 42,
+        forks: 8,
+        url: `https://github.com/${user.github}/awesome-project`,
+        lastUpdated: new Date().toISOString()
+      },
+      {
+        id: '2',
+        name: 'python-ml-toolkit',
+        description: 'Machine learning utilities and tools',
+        language: 'Python',
+        stars: 156,
+        forks: 23,
+        url: `https://github.com/${user.github}/python-ml-toolkit`,
+        lastUpdated: new Date().toISOString()
+      }
+    ];
+
+    updateProfile({ githubRepos: mockRepos });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      logout, 
+      updateProfile, 
+      endorseSkill, 
+      syncGitHubRepos 
+    }}>
       {children}
     </AuthContext.Provider>
   );

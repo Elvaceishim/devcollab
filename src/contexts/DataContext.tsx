@@ -1,15 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Project, Message, User } from '../types';
+import { Project, Message, User, Task, Discussion, DiscussionReply, TrendingData } from '../types';
 
 interface DataContextType {
   projects: Project[];
   messages: Message[];
   users: User[];
-  createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants'>) => void;
+  createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants' | 'tasks' | 'discussions' | 'icebreakerChallenges'>) => void;
   applyToProject: (projectId: string, userId: string) => void;
   acceptApplication: (projectId: string, userId: string) => void;
   sendMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   getProjectMessages: (projectId: string) => Message[];
+  updateProjectTasks: (projectId: string, tasks: Task[]) => void;
+  createDiscussion: (projectId: string, discussion: Omit<Discussion, 'id' | 'replies' | 'isPinned' | 'createdAt' | 'updatedAt'>) => void;
+  replyToDiscussion: (discussionId: string, reply: Omit<DiscussionReply, 'id' | 'createdAt'>) => void;
+  calculateTrendingScores: () => void;
+  getProjectRecommendations: (userId: string) => Project[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -45,14 +50,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const usersData = JSON.parse(savedUsers);
       setUsers(usersData.map(({ password, ...user }: any) => user));
     }
+
+    // Calculate trending scores on load
+    calculateTrendingScores();
   }, []);
 
-  const createProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants'>) => {
+  const createProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'teamMembers' | 'applicants' | 'tasks' | 'discussions' | 'icebreakerChallenges'>) => {
     const newProject: Project = {
       ...projectData,
       id: Math.random().toString(36).substr(2, 9),
       teamMembers: [],
       applicants: [],
+      tasks: [],
+      discussions: [],
+      icebreakerChallenges: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -118,6 +129,121 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return messages.filter(m => m.projectId === projectId);
   };
 
+  const updateProjectTasks = (projectId: string, tasks: Task[]) => {
+    const updatedProjects = projects.map(project =>
+      project.id === projectId
+        ? { ...project, tasks, updatedAt: new Date().toISOString() }
+        : project
+    );
+
+    setProjects(updatedProjects);
+    localStorage.setItem('devcollab_projects', JSON.stringify(updatedProjects));
+  };
+
+  const createDiscussion = (projectId: string, discussionData: Omit<Discussion, 'id' | 'replies' | 'isPinned' | 'createdAt' | 'updatedAt'>) => {
+    const newDiscussion: Discussion = {
+      ...discussionData,
+      id: Math.random().toString(36).substr(2, 9),
+      replies: [],
+      isPinned: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedProjects = projects.map(project =>
+      project.id === projectId
+        ? {
+            ...project,
+            discussions: [...project.discussions, newDiscussion],
+            updatedAt: new Date().toISOString()
+          }
+        : project
+    );
+
+    setProjects(updatedProjects);
+    localStorage.setItem('devcollab_projects', JSON.stringify(updatedProjects));
+  };
+
+  const replyToDiscussion = (discussionId: string, replyData: Omit<DiscussionReply, 'id' | 'createdAt'>) => {
+    const newReply: DiscussionReply = {
+      ...replyData,
+      id: Math.random().toString(36).substr(2, 9),
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedProjects = projects.map(project => ({
+      ...project,
+      discussions: project.discussions.map(discussion =>
+        discussion.id === discussionId
+          ? {
+              ...discussion,
+              replies: [...discussion.replies, newReply],
+              updatedAt: new Date().toISOString()
+            }
+          : discussion
+      ),
+      updatedAt: new Date().toISOString()
+    }));
+
+    setProjects(updatedProjects);
+    localStorage.setItem('devcollab_projects', JSON.stringify(updatedProjects));
+  };
+
+  const calculateTrendingScores = () => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const updatedProjects = projects.map(project => {
+      const projectAge = (now.getTime() - new Date(project.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+      const recentActivity = project.updatedAt > weekAgo.toISOString() ? 1 : 0;
+      
+      // Calculate trending score based on various factors
+      const applicationScore = Math.min(project.applicants.length * 10, 50);
+      const teamScore = Math.min(project.teamSize * 5, 25);
+      const activityScore = recentActivity * 20;
+      const ageScore = Math.max(0, 20 - projectAge); // Newer projects get higher scores
+      const discussionScore = Math.min(project.discussions.length * 3, 15);
+      
+      const totalScore = applicationScore + teamScore + activityScore + ageScore + discussionScore;
+
+      const trending: TrendingData = {
+        score: Math.round(totalScore),
+        views: Math.floor(Math.random() * 100) + project.applicants.length * 5,
+        applications: project.applicants.length,
+        stars: Math.floor(Math.random() * 20),
+        activity: recentActivity,
+        lastCalculated: now.toISOString()
+      };
+
+      return {
+        ...project,
+        trending: totalScore > 30 ? trending : undefined
+      };
+    });
+
+    setProjects(updatedProjects);
+    localStorage.setItem('devcollab_projects', JSON.stringify(updatedProjects));
+  };
+
+  const getProjectRecommendations = (userId: string): Project[] => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return [];
+
+    // Simple recommendation algorithm based on user skills and preferences
+    return projects
+      .filter(project => 
+        project.ownerId !== userId &&
+        !project.teamMembers.some(member => member.id === userId) &&
+        !project.applicants.some(applicant => applicant.id === userId)
+      )
+      .sort((a, b) => {
+        const aSkillMatch = a.skills.filter(skill => user.skills.includes(skill)).length;
+        const bSkillMatch = b.skills.filter(skill => user.skills.includes(skill)).length;
+        return bSkillMatch - aSkillMatch;
+      })
+      .slice(0, 10);
+  };
+
   return (
     <DataContext.Provider value={{
       projects,
@@ -128,6 +254,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       acceptApplication,
       sendMessage,
       getProjectMessages,
+      updateProjectTasks,
+      createDiscussion,
+      replyToDiscussion,
+      calculateTrendingScores,
+      getProjectRecommendations,
     }}>
       {children}
     </DataContext.Provider>

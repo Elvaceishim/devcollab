@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Github, Linkedin, Globe, MessageCircle } from 'lucide-react';
+import { Search, MapPin, Github, Linkedin, Globe, MessageCircle, Award } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
+import EndorsementSystem from '../components/endorsements/EndorsementSystem';
 
 const Network: React.FC = () => {
   const { users } = useData();
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   const otherUsers = users.filter(user => user.id !== currentUser?.id);
 
@@ -98,9 +100,17 @@ const Network: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAvailabilityColor(user.availability)}`}>
-                {user.availability}
-              </span>
+              <div className="flex flex-col items-end space-y-1">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAvailabilityColor(user.availability)}`}>
+                  {user.availability}
+                </span>
+                {user.badges && user.badges.length > 0 && (
+                  <div className="flex items-center space-x-1">
+                    <Award className="h-3 w-3 text-yellow-500" />
+                    <span className="text-xs text-gray-500">{user.badges.length}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {user.location && (
@@ -126,6 +136,13 @@ const Network: React.FC = () => {
                 </span>
               )}
             </div>
+
+            {/* Endorsement count */}
+            {user.endorsements && user.endorsements.length > 0 && (
+              <div className="text-sm text-gray-600 mb-4">
+                <span className="font-medium">{user.endorsements.length} endorsements</span>
+              </div>
+            )}
 
             {user.hourlyRate && (
               <div className="text-sm text-gray-600 mb-4">
@@ -166,10 +183,19 @@ const Network: React.FC = () => {
                   </a>
                 )}
               </div>
-              <Button size="sm" variant="outline">
-                <MessageCircle className="h-4 w-4 mr-1" />
-                Connect
-              </Button>
+              <div className="flex space-x-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setSelectedUser(user)}
+                >
+                  View Profile
+                </Button>
+                <Button size="sm" variant="outline">
+                  <MessageCircle className="h-4 w-4 mr-1" />
+                  Connect
+                </Button>
+              </div>
             </div>
           </Card>
         ))}
@@ -182,6 +208,66 @@ const Network: React.FC = () => {
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No developers found</h3>
           <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+        </div>
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
+                    {selectedUser.avatar ? (
+                      <img src={selectedUser.avatar} alt={selectedUser.name} className="w-16 h-16 rounded-full" />
+                    ) : (
+                      <span className="text-2xl font-bold text-primary-600">
+                        {selectedUser.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{selectedUser.name}</h2>
+                    <div className="flex items-center space-x-3 mt-1">
+                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${getExperienceColor(selectedUser.experience)}`}>
+                        {selectedUser.experience}
+                      </span>
+                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(selectedUser.availability)}`}>
+                        {selectedUser.availability}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="grid lg:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">About</h3>
+                  <p className="text-gray-600 mb-6">{selectedUser.bio || 'No bio provided.'}</p>
+                  
+                  {selectedUser.location && (
+                    <div className="flex items-center text-gray-600 mb-4">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      <span>{selectedUser.location}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <EndorsementSystem user={selectedUser} canEndorse={true} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

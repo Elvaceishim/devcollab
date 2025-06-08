@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, Clock, DollarSign } from 'lucide-react';
+import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, Clock, DollarSign, Sync } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
+import BadgeSystem from '../components/badges/BadgeSystem';
+import EndorsementSystem from '../components/endorsements/EndorsementSystem';
 
 const Profile: React.FC = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, syncGitHubRepos } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     bio: user?.bio || '',
@@ -63,6 +66,12 @@ const Profile: React.FC = () => {
     setIsEditing(false);
   };
 
+  const handleSyncGitHub = async () => {
+    setSyncing(true);
+    await syncGitHubRepos();
+    setSyncing(false);
+  };
+
   const getAvailabilityColor = (availability: string) => {
     switch (availability) {
       case 'Available': return 'bg-green-100 text-green-800';
@@ -73,30 +82,44 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-        {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
-            <Edit3 className="h-4 w-4 mr-2" />
-            Edit Profile
-          </Button>
-        ) : (
-          <div className="flex space-x-2">
-            <Button onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Save
+        <div className="flex items-center space-x-3">
+          {user.github && (
+            <Button
+              variant="outline"
+              onClick={handleSyncGitHub}
+              loading={syncing}
+              size="sm"
+            >
+              <Sync className="h-4 w-4 mr-2" />
+              Sync GitHub
             </Button>
-            <Button variant="ghost" onClick={handleCancel}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
+          )}
+          {!isEditing ? (
+            <Button onClick={() => setIsEditing(true)}>
+              <Edit3 className="h-4 w-4 mr-2" />
+              Edit Profile
             </Button>
-          </div>
-        )}
+          ) : (
+            <div className="flex space-x-2">
+              <Button onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+              <Button variant="ghost" onClick={handleCancel}>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
+          {/* Basic Info Card */}
           <Card className="p-6 text-center">
             <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
               {user.avatar ? (
@@ -168,9 +191,35 @@ const Profile: React.FC = () => {
               )}
             </div>
           </Card>
+
+          {/* GitHub Repos */}
+          {user.githubRepos && user.githubRepos.length > 0 && (
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">GitHub Repositories</h3>
+              <div className="space-y-3">
+                {user.githubRepos.slice(0, 3).map(repo => (
+                  <div key={repo.id} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900">{repo.name}</h4>
+                      <span className="text-xs text-gray-500">{repo.language}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{repo.description}</p>
+                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <span>⭐ {repo.stars}</span>
+                      <span>🍴 {repo.forks}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Badges */}
+          <BadgeSystem user={user} badges={user.badges} />
         </div>
 
         <div className="lg:col-span-2 space-y-6">
+          {/* About Section */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">About</h3>
             {isEditing ? (
@@ -187,27 +236,10 @@ const Profile: React.FC = () => {
             )}
           </Card>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Skills</h3>
-            {isEditing ? (
-              <Input
-                name="skills"
-                value={formData.skills}
-                onChange={handleChange}
-                placeholder="React, Node.js, Python (comma-separated)"
-                helperText="Separate skills with commas"
-              />
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {user.skills.map(skill => (
-                  <span key={skill} className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            )}
-          </Card>
+          {/* Skills & Endorsements */}
+          <EndorsementSystem user={user} canEndorse={false} />
 
+          {/* Professional Details */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Professional Details</h3>
             <div className="grid md:grid-cols-2 gap-4">
@@ -291,6 +323,7 @@ const Profile: React.FC = () => {
             </div>
           </Card>
 
+          {/* Links */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Links</h3>
             <div className="grid md:grid-cols-2 gap-4">

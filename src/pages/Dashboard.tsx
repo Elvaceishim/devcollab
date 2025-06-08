@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Clock, Users, DollarSign, Sparkles, UserCheck, Bell } from 'lucide-react';
+import { Plus, Search, Filter, Clock, Users, DollarSign, Sparkles, UserCheck, Bell, Target } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import { SearchFilters } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import ProjectModal from '../components/projects/ProjectModal';
 import ApplicationModal from '../components/projects/ApplicationModal';
 import ApplicationsModal from '../components/projects/ApplicationsModal';
+import AdvancedSearch from '../components/search/AdvancedSearch';
+import TrendingProjects from '../components/trending/TrendingProjects';
+import MatchmakingQuiz from '../components/quiz/MatchmakingQuiz';
 import { Project } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -15,10 +19,20 @@ const Dashboard: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showApplicationsModal, setShowApplicationsModal] = useState(false);
+  const [showQuizModal, setShowQuizModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'all' | 'my-projects'>('all');
+  const [filters, setFilters] = useState<SearchFilters>({
+    skills: [],
+    projectTypes: [],
+    difficulty: [],
+    timeCommitment: [],
+    status: [],
+    teamSize: { min: 1, max: 20 },
+    hasBudget: false,
+    trending: false
+  });
 
   const myProjects = projects.filter(project => project.ownerId === user?.id);
   const otherProjects = projects.filter(project => project.ownerId !== user?.id);
@@ -26,13 +40,44 @@ const Dashboard: React.FC = () => {
   const displayProjects = viewMode === 'my-projects' ? myProjects : otherProjects;
 
   const filteredProjects = displayProjects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Search query filter
+    const matchesSearch = !searchQuery || 
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesFilter = filterType === 'All' || project.type === filterType;
+    // Skills filter
+    const matchesSkills = filters.skills.length === 0 || 
+      filters.skills.some(skill => project.skills.includes(skill));
     
-    return matchesSearch && matchesFilter;
+    // Project type filter
+    const matchesType = filters.projectTypes.length === 0 || 
+      filters.projectTypes.includes(project.type);
+    
+    // Difficulty filter
+    const matchesDifficulty = filters.difficulty.length === 0 || 
+      filters.difficulty.includes(project.difficulty || 'Intermediate');
+    
+    // Time commitment filter
+    const matchesCommitment = filters.timeCommitment.length === 0 || 
+      filters.timeCommitment.includes(project.timeCommitment || 'flexible');
+    
+    // Status filter
+    const matchesStatus = filters.status.length === 0 || 
+      filters.status.includes(project.status);
+    
+    // Team size filter
+    const matchesTeamSize = project.maxTeamSize >= filters.teamSize.min && 
+      project.maxTeamSize <= filters.teamSize.max;
+    
+    // Budget filter
+    const matchesBudget = !filters.hasBudget || !!project.budget;
+    
+    // Trending filter
+    const matchesTrending = !filters.trending || !!project.trending;
+    
+    return matchesSearch && matchesSkills && matchesType && matchesDifficulty && 
+           matchesCommitment && matchesStatus && matchesTeamSize && matchesBudget && matchesTrending;
   });
 
   const handleApplyClick = (project: Project) => {
@@ -98,6 +143,16 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+            {user && !user.quizResults?.length && (
+              <Button
+                variant="secondary"
+                onClick={() => setShowQuizModal(true)}
+                className="flex items-center space-x-2"
+              >
+                <Target className="h-4 w-4" />
+                <span>Find Matches</span>
+              </Button>
+            )}
             {totalApplications > 0 && (
               <div className="relative">
                 <Button
@@ -148,29 +203,21 @@ const Dashboard: React.FC = () => {
           </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search projects by name, description, or skills..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 pr-4 py-3 w-full border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white/80 backdrop-blur-sm"
-            />
-          </div>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white/80 backdrop-blur-sm"
-          >
-            <option value="All">All Types</option>
-            <option value="Open Source">Open Source</option>
-            <option value="Freelance">Freelance</option>
-            <option value="Startup">Startup</option>
-            <option value="Personal">Personal</option>
-          </select>
-        </div>
+        {/* Advanced Search */}
+        <AdvancedSearch
+          filters={filters}
+          onFiltersChange={setFilters}
+          onSearch={setSearchQuery}
+          searchQuery={searchQuery}
+        />
+
+        {/* Trending Projects */}
+        {viewMode === 'all' && (
+          <TrendingProjects
+            projects={projects}
+            onProjectClick={handleApplyClick}
+          />
+        )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map(project => (
@@ -183,6 +230,11 @@ const Dashboard: React.FC = () => {
                   <span className={`px-3 py-1 text-xs font-medium rounded-full ${getTypeColor(project.type)}`}>
                     {project.type}
                   </span>
+                  {project.trending && (
+                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-300">
+                      🔥 Trending
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   {project.type === 'Startup' && (
@@ -300,6 +352,7 @@ const Dashboard: React.FC = () => {
           </div>
         )}
 
+        {/* Modals */}
         {showCreateModal && (
           <ProjectModal onClose={() => setShowCreateModal(false)} />
         )}
@@ -322,6 +375,25 @@ const Dashboard: React.FC = () => {
               setSelectedProject(null);
             }}
           />
+        )}
+
+        {showQuizModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Find Your Perfect Match</h2>
+                  <button
+                    onClick={() => setShowQuizModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ×
+                  </button>
+                </div>
+                <MatchmakingQuiz />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
