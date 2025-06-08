@@ -32,31 +32,6 @@ A comprehensive developer collaboration platform built with React, TypeScript, a
 3. Set up Supabase:
    - Create a new Supabase project
    - Copy your project URL and anon key
-   - Create a storage bucket named `avatars` for profile images
-   - Set up the following storage policies for the `avatars` bucket:
-
-   **SELECT policy (for viewing images):**
-   ```sql
-   CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
-   ```
-
-   **INSERT policy (for uploading images):**
-   ```sql
-   CREATE POLICY "Authenticated users can upload avatars" ON storage.objects 
-   FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.role() = 'authenticated');
-   ```
-
-   **UPDATE policy (for updating images):**
-   ```sql
-   CREATE POLICY "Users can update own avatars" ON storage.objects 
-   FOR UPDATE USING (bucket_id = 'avatars' AND auth.role() = 'authenticated');
-   ```
-
-   **DELETE policy (for deleting images):**
-   ```sql
-   CREATE POLICY "Users can delete own avatars" ON storage.objects 
-   FOR DELETE USING (bucket_id = 'avatars' AND auth.role() = 'authenticated');
-   ```
 
 4. Create a `.env` file based on `.env.example`:
    ```bash
@@ -69,7 +44,51 @@ A comprehensive developer collaboration platform built with React, TypeScript, a
    VITE_SUPABASE_ANON_KEY=your-anon-key
    ```
 
-6. Start the development server:
+6. **IMPORTANT: Set up Supabase Storage**
+
+   Go to your Supabase dashboard and follow these steps:
+
+   **Step 1: Create Storage Bucket**
+   - Navigate to Storage in your Supabase dashboard
+   - Click "New bucket"
+   - Name it `avatars`
+   - Set it to **Public**
+   - Click "Create bucket"
+
+   **Step 2: Set up Storage Policies**
+   
+   Go to Storage > Policies and create the following policies for the `avatars` bucket:
+
+   **Policy 1: Public Read Access**
+   ```sql
+   CREATE POLICY "Public Access" ON storage.objects 
+   FOR SELECT USING (bucket_id = 'avatars');
+   ```
+
+   **Policy 2: Authenticated Upload**
+   ```sql
+   CREATE POLICY "Authenticated users can upload avatars" ON storage.objects 
+   FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+   ```
+
+   **Policy 3: Authenticated Update**
+   ```sql
+   CREATE POLICY "Users can update own avatars" ON storage.objects 
+   FOR UPDATE USING (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+   ```
+
+   **Policy 4: Authenticated Delete**
+   ```sql
+   CREATE POLICY "Users can delete own avatars" ON storage.objects 
+   FOR DELETE USING (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+   ```
+
+   **Alternative: Use the Supabase Dashboard**
+   - Go to Storage > Policies
+   - Click "New Policy" for each policy above
+   - Use the policy editor to create them
+
+7. Start the development server:
    ```bash
    npm run dev
    ```
@@ -79,20 +98,35 @@ A comprehensive developer collaboration platform built with React, TypeScript, a
 The application includes a comprehensive image upload system with the following features:
 
 - **Avatar Upload**: Users can upload profile pictures
-- **Image Validation**: File type and size validation
+- **Image Validation**: File type and size validation (5MB max)
 - **Automatic Compression**: Optimized for web delivery
 - **Secure Storage**: Images stored in Supabase Storage
 - **Preview System**: Real-time image preview
 - **Error Handling**: Comprehensive error messages
+- **Auto-cleanup**: Old images are automatically deleted when new ones are uploaded
 
-#### Storage Configuration
+#### Storage Configuration Verification
 
-Make sure your Supabase storage bucket is configured with the correct policies:
+To verify your storage is set up correctly:
 
-1. Go to Storage in your Supabase dashboard
-2. Create a bucket named `avatars`
-3. Set it to public
-4. Apply the RLS policies mentioned above
+1. **Check Bucket Exists**: Go to Storage in Supabase dashboard, ensure `avatars` bucket exists and is public
+2. **Verify Policies**: Go to Storage > Policies, ensure all 4 policies are created
+3. **Test Upload**: Try uploading an avatar in the app profile section
+
+#### Troubleshooting
+
+**Common Issues:**
+
+1. **"Bucket not found" error**: Make sure the `avatars` bucket exists and is public
+2. **"Permission denied" error**: Check that all RLS policies are correctly set up
+3. **"File too large" error**: Ensure file is under 5MB
+4. **"Invalid file type" error**: Only image files (PNG, JPG, GIF, WebP) are allowed
+
+**Debug Steps:**
+1. Check browser console for detailed error messages
+2. Verify environment variables are set correctly
+3. Test Supabase connection in browser network tab
+4. Check Supabase logs in dashboard
 
 #### Usage
 
@@ -127,13 +161,14 @@ const { uploadAvatar } = useImageUpload();
 ```
 src/
 ├── components/          # Reusable UI components
-│   ├── common/         # Generic components (Button, Input, etc.)
+│   ├── common/         # Generic components (Button, Input, ImageUpload, etc.)
 │   ├── auth/           # Authentication components
 │   ├── projects/       # Project-related components
 │   ├── github/         # GitHub integration
+│   ├── networking/     # Developer networking features
 │   └── ...
 ├── contexts/           # React contexts for state management
-├── hooks/              # Custom React hooks
+├── hooks/              # Custom React hooks (useImageUpload, etc.)
 ├── lib/                # Utility libraries (Supabase client)
 ├── pages/              # Main application pages
 ├── types/              # TypeScript type definitions

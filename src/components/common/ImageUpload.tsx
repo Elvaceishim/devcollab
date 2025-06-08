@@ -82,6 +82,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     } catch (err) {
       setError('Failed to upload image. Please try again.');
       console.error('Upload error:', err);
+      // Revert preview on error
+      setPreviewUrl(currentImage || null);
     } finally {
       setUploading(false);
     }
@@ -100,30 +102,40 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     fileInputRef.current?.click();
   };
 
+  // Update preview when currentImage changes
+  React.useEffect(() => {
+    setPreviewUrl(currentImage || null);
+  }, [currentImage]);
+
   return (
     <div className={`relative ${className}`}>
       <div className="flex flex-col items-center space-y-4">
         {/* Image Preview */}
-        <div className={`relative ${sizeClasses[size]} ${shapeClasses[shape]} overflow-hidden border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors`}>
+        <div className={`relative ${sizeClasses[size]} ${shapeClasses[shape]} overflow-hidden border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors bg-gray-50`}>
           {previewUrl ? (
             <>
               <img
                 src={previewUrl}
                 alt="Preview"
                 className="w-full h-full object-cover"
+                onError={() => {
+                  setError('Failed to load image');
+                  setPreviewUrl(null);
+                }}
               />
               {uploading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <Loader2 className="h-6 w-6 text-white animate-spin" />
                 </div>
               )}
-              <button
-                onClick={handleRemoveImage}
-                disabled={uploading}
-                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              {!uploading && (
+                <button
+                  onClick={handleRemoveImage}
+                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
             </>
           ) : (
             <button
@@ -136,7 +148,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               ) : (
                 <>
                   <Camera className="h-6 w-6 mb-1" />
-                  <span className="text-xs">Add Photo</span>
+                  <span className="text-xs font-medium">Add Photo</span>
                 </>
               )}
             </button>
@@ -168,7 +180,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
         {/* Error Message */}
         {error && (
-          <div className="flex items-center space-x-2 text-red-600 text-sm">
+          <div className="flex items-center space-x-2 text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">
             <AlertCircle className="h-4 w-4" />
             <span>{error}</span>
           </div>

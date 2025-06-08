@@ -16,17 +16,29 @@ export const useImageUpload = () => {
     setError(null);
 
     try {
+      // Validate file
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please select a valid image file');
+      }
+
+      const fileSizeMB = file.size / (1024 * 1024);
+      if (fileSizeMB > 5) {
+        throw new Error('File size must be less than 5MB');
+      }
+
       // Create unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = fileName;
 
       // Delete old avatar if exists
       if (user.avatar) {
         try {
-          const oldPath = user.avatar.split('/').pop();
-          if (oldPath) {
-            await deleteImage(AVATAR_BUCKET, `avatars/${oldPath}`);
+          // Extract filename from URL
+          const urlParts = user.avatar.split('/');
+          const oldFileName = urlParts[urlParts.length - 1];
+          if (oldFileName && oldFileName !== fileName) {
+            await deleteImage(AVATAR_BUCKET, oldFileName);
           }
         } catch (err) {
           console.warn('Could not delete old avatar:', err);
@@ -57,9 +69,11 @@ export const useImageUpload = () => {
 
     try {
       // Extract filename from URL
-      const fileName = user.avatar.split('/').pop();
+      const urlParts = user.avatar.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      
       if (fileName) {
-        await deleteImage(AVATAR_BUCKET, `avatars/${fileName}`);
+        await deleteImage(AVATAR_BUCKET, fileName);
       }
 
       // Update user profile
