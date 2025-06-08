@@ -110,6 +110,12 @@ const LoginForm: React.FC = () => {
                 </Link>
               </p>
             </div>
+
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+              <p className="text-xs text-blue-700 text-center font-medium">
+                💡 Demo Tip: Create an account first, then sign in with your credentials
+              </p>
+            </div>
           </form>
         </div>
       </div>
