@@ -213,3 +213,17 @@ export interface AuthContextType {
   endorseSkill: (userId: string, skill: string, message?: string) => void;
   syncGitHubRepos: () => Promise<void>;
 }
+
+// Image upload types
+export interface ImageUploadResult {
+  url: string;
+  path: string;
+  size: number;
+}
+
+export interface ImageUploadOptions {
+  bucket: string;
+  maxSize?: number; // in MB
+  allowedTypes?: string[];
+  quality?: number; // 0-1 for compression
+}

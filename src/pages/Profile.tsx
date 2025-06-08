@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, Clock, DollarSign, FolderSync as Sync } from 'lucide-react';
+import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, Clock, DollarSign, FolderSync as Sync, Camera } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
+import ImageUpload from '../components/common/ImageUpload';
 import BadgeSystem from '../components/badges/BadgeSystem';
 import EndorsementSystem from '../components/endorsements/EndorsementSystem';
 import GitHubIntegration from '../components/github/GitHubIntegration';
+import { useImageUpload } from '../hooks/useImageUpload';
 
 const Profile: React.FC = () => {
   const { user, updateProfile, syncGitHubRepos } = useAuth();
+  const { uploadAvatar, uploading: avatarUploading } = useImageUpload();
   const [isEditing, setIsEditing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [formData, setFormData] = useState({
@@ -73,6 +76,10 @@ const Profile: React.FC = () => {
     setSyncing(false);
   };
 
+  const handleAvatarChange = (file: File | null, previewUrl: string | null) => {
+    // This is handled by the ImageUpload component
+  };
+
   const getAvailabilityColor = (availability: string) => {
     switch (availability) {
       case 'Available': return 'bg-green-100 text-green-800';
@@ -122,14 +129,17 @@ const Profile: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
           {/* Basic Info Card */}
           <Card className="p-6 text-center">
-            <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              {user.avatar ? (
-                <img src={user.avatar} alt={user.name} className="w-24 h-24 rounded-full" />
-              ) : (
-                <span className="text-2xl font-bold text-primary-600">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-              )}
+            {/* Avatar Upload */}
+            <div className="mb-6">
+              <ImageUpload
+                currentImage={user.avatar}
+                onImageChange={handleAvatarChange}
+                onImageUpload={uploadAvatar}
+                size="lg"
+                shape="circle"
+                label="Change Avatar"
+                className="mx-auto"
+              />
             </div>
             
             {isEditing ? (
