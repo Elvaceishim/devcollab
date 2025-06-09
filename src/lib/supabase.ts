@@ -60,28 +60,3 @@ export const getImageUrl = (bucket: string, path: string) => {
   
   return publicUrl;
 };
-
-// Initialize storage bucket and policies
-export const initializeStorage = async () => {
-  try {
-    // Check if bucket exists, create if it doesn't
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const avatarBucket = buckets?.find(bucket => bucket.name === AVATAR_BUCKET);
-    
-    if (!avatarBucket) {
-      const { error } = await supabase.storage.createBucket(AVATAR_BUCKET, {
-        public: true,
-        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
-        fileSizeLimit: 5242880 // 5MB
-      });
-      
-      if (error) {
-        console.error('Error creating bucket:', error);
-      } else {
-        console.log('Avatar bucket created successfully');
-      }
-    }
-  } catch (error) {
-    console.error('Error initializing storage:', error);
-  }
-};
