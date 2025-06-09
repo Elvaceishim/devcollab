@@ -10,9 +10,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -25,7 +22,12 @@ export default defineConfig({
         manualChunks: undefined,
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        format: 'es',
+        generatedCode: {
+          preset: 'es2015',
+          constBindings: true
+        }
       }
     },
   },
@@ -34,5 +36,10 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: true
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2020'
+    }
   }
 });
