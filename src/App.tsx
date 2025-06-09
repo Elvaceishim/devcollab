@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import Network from './pages/Network';
 import Chat from './pages/Chat';
 import ProjectDetail from './pages/ProjectDetail';
+import AuthTest from './components/auth/AuthTest';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -41,6 +42,7 @@ const AppContent: React.FC = () => {
               <SignupForm />
             </PublicRoute>
           } />
+          <Route path="/auth-test" element={<AuthTest />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
@@ -72,7 +74,7 @@ const AppContent: React.FC = () => {
   );
 };
 
-function App() {
+const App: React.FC = () => {
   return (
     <AuthProvider>
       <DataProvider>
@@ -80,6 +82,6 @@ function App() {
       </DataProvider>
     </AuthProvider>
   );
-}
+};
 
 export default App;
