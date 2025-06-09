@@ -11,9 +11,15 @@ export const AVATAR_BUCKET = 'avatars';
 // Helper function to upload image to Supabase storage
 export const uploadImage = async (file: File, bucket: string, path: string) => {
   try {
+    // Create a unique filename with timestamp
+    const timestamp = Date.now();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${path}-${timestamp}.${fileExt}`;
+
+    // Upload the file
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(path, file, {
+      .upload(fileName, file, {
         cacheControl: '3600',
         upsert: true
       });
@@ -22,10 +28,16 @@ export const uploadImage = async (file: File, bucket: string, path: string) => {
       throw error;
     }
 
-    // Get public URL
+    // Get public URL with transformation parameters
     const { data: { publicUrl } } = supabase.storage
       .from(bucket)
-      .getPublicUrl(path);
+      .getPublicUrl(fileName, {
+        transform: {
+          width: 400,
+          height: 400,
+          quality: 80
+        }
+      });
 
     return { data, publicUrl };
   } catch (error) {
@@ -56,7 +68,13 @@ export const deleteImage = async (bucket: string, path: string) => {
 export const getImageUrl = (bucket: string, path: string) => {
   const { data: { publicUrl } } = supabase.storage
     .from(bucket)
-    .getPublicUrl(path);
+    .getPublicUrl(path, {
+      transform: {
+        width: 400,
+        height: 400,
+        quality: 80
+      }
+    });
   
   return publicUrl;
 };

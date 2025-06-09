@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X, Camera, Loader2, AlertCircle } from 'lucide-react';
 import Button from './Button';
 
@@ -103,9 +103,18 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   // Update preview when currentImage changes
-  React.useEffect(() => {
+  useEffect(() => {
     setPreviewUrl(currentImage || null);
   }, [currentImage]);
+
+  // Cleanup preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return (
     <div className={`relative ${className}`}>
