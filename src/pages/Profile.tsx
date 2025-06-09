@@ -12,20 +12,21 @@ import { useImageUpload } from '../hooks/useImageUpload';
 
 const Profile: React.FC = () => {
   const { user, updateProfile, syncGitHubRepos } = useAuth();
-  const { uploadAvatar, uploading: avatarUploading } = useImageUpload();
+  const { uploadAvatar, isUploading: avatarUploading } = useImageUpload();
   const [isEditing, setIsEditing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     bio: user?.bio || '',
     location: user?.location || '',
-    skills: user?.skills.join(', ') || '',
+    skills: (user?.skills || []).join(', '),
     experience: user?.experience || 'Junior',
     github: user?.github || '',
     linkedin: user?.linkedin || '',
     portfolio: user?.portfolio || '',
     hourlyRate: user?.hourlyRate?.toString() || '',
     availability: user?.availability || 'Available',
+    avatar: user?.avatar || null
   });
 
   if (!user) return null;
@@ -49,6 +50,7 @@ const Profile: React.FC = () => {
       portfolio: formData.portfolio,
       hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined,
       availability: formData.availability as any,
+      avatar: formData.avatar || undefined
     });
     
     setIsEditing(false);
@@ -56,16 +58,17 @@ const Profile: React.FC = () => {
 
   const handleCancel = () => {
     setFormData({
-      name: user.name,
-      bio: user.bio,
-      location: user.location,
-      skills: user.skills.join(', '),
-      experience: user.experience,
+      name: user.name || '',
+      bio: user.bio || '',
+      location: user.location || '',
+      skills: (user.skills || []).join(', '),
+      experience: user.experience || 'Junior',
       github: user.github || '',
       linkedin: user.linkedin || '',
       portfolio: user.portfolio || '',
       hourlyRate: user.hourlyRate?.toString() || '',
-      availability: user.availability,
+      availability: user.availability || 'Available',
+      avatar: user.avatar || null
     });
     setIsEditing(false);
   };
@@ -76,8 +79,19 @@ const Profile: React.FC = () => {
     setSyncing(false);
   };
 
-  const handleAvatarChange = (file: File | null, previewUrl: string | null) => {
-    // This is handled by the ImageUpload component
+  const handleAvatarChange = async (file: File | null, previewUrl: string | null) => {
+    if (file) {
+      try {
+        const uploadedUrl = await uploadAvatar(file);
+        if (uploadedUrl) {
+          setFormData(prev => ({ ...prev, avatar: uploadedUrl }));
+        }
+      } catch (err) {
+        console.error('Error uploading avatar:', err);
+      }
+    } else {
+      setFormData(prev => ({ ...prev, avatar: null }));
+    }
   };
 
   const getAvailabilityColor = (availability: string) => {

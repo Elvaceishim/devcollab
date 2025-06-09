@@ -5,7 +5,7 @@ import Button from './Button';
 interface ImageUploadProps {
   currentImage?: string;
   onImageChange: (file: File | null, previewUrl: string | null) => void;
-  onImageUpload: (file: File) => Promise<string>;
+  onImageUpload: (file: File) => Promise<string | null>;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   shape?: 'circle' | 'square';

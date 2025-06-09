@@ -1,9 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Log environment variable status (without exposing values)
+console.log('Supabase URL configured:', !!supabaseUrl);
+console.log('Supabase Anon Key configured:', !!supabaseAnonKey);
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Please check your configuration.');
+}
+
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
 
 // Storage bucket name for user avatars
 export const AVATAR_BUCKET = 'avatars';
@@ -14,7 +22,7 @@ export const uploadImage = async (file: File, bucket: string, path: string) => {
     // Create a unique filename with timestamp
     const timestamp = Date.now();
     const fileExt = file.name.split('.').pop();
-    const fileName = `${path}-${timestamp}.${fileExt}`;
+    const fileName = `${timestamp}.${fileExt}`;
 
     // Upload the file
     const { data, error } = await supabase.storage
@@ -25,19 +33,14 @@ export const uploadImage = async (file: File, bucket: string, path: string) => {
       });
 
     if (error) {
+      console.error('Upload error:', error);
       throw error;
     }
 
-    // Get public URL with transformation parameters
+    // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from(bucket)
-      .getPublicUrl(fileName, {
-        transform: {
-          width: 400,
-          height: 400,
-          quality: 80
-        }
-      });
+      .getPublicUrl(fileName);
 
     return { data, publicUrl };
   } catch (error) {

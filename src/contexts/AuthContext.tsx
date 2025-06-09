@@ -16,14 +16,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check active sessions and sets the user
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         fetchUserProfile(session.user.id);
       }
     });
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         fetchUserProfile(session.user.id);
@@ -32,86 +32,116 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      if (profile) {
+        setUser({
+          id: profile.id,
+          email: profile.email,
+          name: profile.name,
+          avatar: profile.avatar,
+          bio: profile.bio,
+          location: profile.location,
+          skills: profile.skills,
+          experience: profile.experience,
+          github: profile.github,
+          linkedin: profile.linkedin,
+          portfolio: profile.portfolio,
+          hourlyRate: profile.hourly_rate,
+          availability: profile.availability,
+          joinedAt: profile.created_at,
+          badges: profile.badges || [],
+          endorsements: profile.endorsements || [],
+          githubRepos: profile.github_repos || [],
+          quizResults: profile.quiz_results || [],
+          preferences: profile.preferences || {}
+        });
+      }
+    } catch (error) {
       console.error('Error fetching user profile:', error);
-      return;
-    }
-
-    if (data) {
-      setUser({
-        ...data,
-        badges: data.badges || [],
-        endorsements: data.endorsements || [],
-        githubRepos: data.githubRepos || [],
-        quizResults: data.quizResults || [],
-        preferences: data.preferences || {}
-      });
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
 
-      if (error) throw error;
-      return !!data.user;
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        await fetchUserProfile(data.user.id);
+        return true;
+      }
+
+      return false;
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Error logging in:', error);
       return false;
     }
   };
 
-  const signup = async (userData: Partial<User> & { email: string; password: string }): Promise<boolean> => {
+  const signup = async (userData: Partial<User> & { email: string; password: string }) => {
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password,
+        password: userData.password
       });
 
-      if (authError) throw authError;
-      if (!authData.user) return false;
+      if (error) {
+        throw error;
+      }
 
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            email: userData.email,
-            name: userData.name || '',
-            bio: userData.bio || '',
-            location: userData.location || '',
-            skills: userData.skills || [],
-            experience: userData.experience || 'Junior',
-            github: userData.github || '',
-            linkedin: userData.linkedin || '',
-            portfolio: userData.portfolio || '',
-            availability: 'Available',
-            joined_at: new Date().toISOString(),
-            badges: [],
-            endorsements: [],
-            github_repos: [],
-            quiz_results: [],
-            preferences: {}
-          }
-        ]);
+      if (data.user) {
+        // Create initial profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              email: userData.email,
+              name: userData.name || userData.email.split('@')[0],
+              bio: '',
+              location: '',
+              skills: [],
+              experience: 'Junior',
+              availability: 'Available',
+              badges: [],
+              endorsements: [],
+              github_repos: [],
+              quiz_results: [],
+              preferences: {}
+            }
+          ]);
 
-      if (profileError) throw profileError;
-      return true;
+        if (profileError) {
+          throw profileError;
+        }
+
+        await fetchUserProfile(data.user.id);
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error('Error signing up:', error);
       return false;
@@ -120,26 +150,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
       setUser(null);
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Error logging out:', error);
     }
   };
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
-    
+
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update({
+          name: updates.name,
+          avatar: updates.avatar,
+          bio: updates.bio,
+          location: updates.location,
+          skills: updates.skills,
+          experience: updates.experience,
+          github: updates.github,
+          linkedin: updates.linkedin,
+          portfolio: updates.portfolio,
+          hourly_rate: updates.hourlyRate,
+          availability: updates.availability,
+          badges: updates.badges,
+          endorsements: updates.endorsements,
+          github_repos: updates.githubRepos,
+          quiz_results: updates.quizResults,
+          preferences: updates.preferences
+        })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
+      setUser(prev => prev ? { ...prev, ...updates } : null);
     } catch (error) {
       console.error('Error updating profile:', error);
     }
@@ -149,8 +200,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
 
     try {
-      const endorsement: Endorsement = {
-        id: Math.random().toString(36).substr(2, 9),
+      const endorsement = {
+        id: crypto.randomUUID(),
         skill,
         endorserId: user.id,
         endorserName: user.name,
@@ -165,7 +216,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     } catch (error) {
       console.error('Error endorsing skill:', error);
     }
@@ -173,52 +226,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const syncGitHubRepos = async () => {
     if (!user?.github) return;
-    
-    try {
-      // Simulate GitHub API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock GitHub repos data
-      const mockRepos = [
-        {
-          id: '1',
-          name: 'awesome-project',
-          description: 'A really awesome project built with React',
-          language: 'JavaScript',
-          stars: 42,
-          forks: 8,
-          url: `https://github.com/${user.github}/awesome-project`,
-          lastUpdated: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'python-ml-toolkit',
-          description: 'Machine learning utilities and tools',
-          language: 'Python',
-          stars: 156,
-          forks: 23,
-          url: `https://github.com/${user.github}/python-ml-toolkit`,
-          lastUpdated: new Date().toISOString()
-        }
-      ];
 
-      await updateProfile({ githubRepos: mockRepos });
+    try {
+      // Implement GitHub API integration here
+      // This is a placeholder for the actual implementation
+      console.log('Syncing GitHub repos...');
     } catch (error) {
       console.error('Error syncing GitHub repos:', error);
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      signup, 
-      logout, 
-      updateProfile, 
-      endorseSkill, 
-      syncGitHubRepos 
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    login,
+    signup,
+    logout,
+    updateProfile,
+    endorseSkill,
+    syncGitHubRepos
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

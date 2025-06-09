@@ -18,6 +18,7 @@ export interface User {
   githubRepos?: GitHubRepo[];
   quizResults?: QuizResult[];
   preferences?: UserPreferences;
+  profile?: Profile;
 }
 
 export interface Badge {

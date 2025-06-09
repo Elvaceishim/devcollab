@@ -13,18 +13,24 @@ export default function AuthTest() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log('Attempting sign up with:', { email });
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign up error:', error);
+        throw error;
+      }
 
+      console.log('Sign up response:', data);
       setMessage({
         type: 'success',
         text: 'Check your email for the confirmation link!',
       });
     } catch (error: any) {
+      console.error('Sign up error details:', error);
       setMessage({
         type: 'error',
         text: error.message || 'An error occurred during sign up',
@@ -39,18 +45,27 @@ export default function AuthTest() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting sign in with:', { email });
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        if (error.message === 'Invalid login credentials') {
+          throw new Error('Invalid email or password. Please check your credentials or create an account first.');
+        }
+        throw error;
+      }
 
+      console.log('Sign in response:', data);
       setMessage({
         type: 'success',
         text: 'Successfully signed in!',
       });
     } catch (error: any) {
+      console.error('Sign in error details:', error);
       setMessage({
         type: 'error',
         text: error.message || 'An error occurred during sign in',
