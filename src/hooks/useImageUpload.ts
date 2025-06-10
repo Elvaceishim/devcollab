@@ -30,7 +30,7 @@ export const useImageUpload = () => {
       // Generate a unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = fileName;
 
       // Upload the new avatar
       const { error: uploadError } = await supabase.storage
@@ -55,7 +55,7 @@ export const useImageUpload = () => {
         if (oldPath) {
           await supabase.storage
             .from('avatars')
-            .remove([`avatars/${oldPath}`]);
+            .remove([oldPath]);
         }
       }
 
