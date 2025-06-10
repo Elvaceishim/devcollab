@@ -9,9 +9,10 @@ console.log('Supabase Anon Key configured:', !!supabaseAnonKey);
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables. Please check your configuration.');
+  throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Storage bucket name for user avatars
 export const AVATAR_BUCKET = 'avatars';
