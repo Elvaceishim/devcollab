@@ -12,9 +12,7 @@ import Network from './pages/Network';
 import Chat from './pages/Chat';
 import ProjectDetail from './pages/ProjectDetail';
 import AuthTest from './components/auth/AuthTest';
-import { ChakraProvider, CSSReset, ColorModeScript } from '@chakra-ui/react';
-import PrivateRoute from './components/auth/PrivateRoute';
-import Navbar from './components/common/Navbar';
+import { ChakraProvider, ColorModeScript } from '@chakra-ui/react';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -29,63 +27,12 @@ import Chats from './pages/Chats';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  return user ? <>{children}</> : <Navigate to="/auth" />;
+  return user ? <>{children}</> : <Navigate to="/login" />;
 };
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   return !user ? <>{children}</> : <Navigate to="/dashboard" />;
-};
-
-const AppContent: React.FC = () => {
-  const { user } = useAuth();
-
-  return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        {user && <Header />}
-        <Routes>
-          <Route path="/" element={<Hero />} />
-          <Route path="/auth" element={
-            <PublicRoute>
-              <LoginForm />
-            </PublicRoute>
-          } />
-          <Route path="/signup" element={
-            <PublicRoute>
-              <SignupForm />
-            </PublicRoute>
-          } />
-          <Route path="/auth-test" element={<AuthTest />} />
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/project/:id" element={
-            <ProtectedRoute>
-              <ProjectDetail />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          <Route path="/network" element={
-            <ProtectedRoute>
-              <Network />
-            </ProtectedRoute>
-          } />
-          <Route path="/chat" element={
-            <ProtectedRoute>
-              <Chat />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </div>
-    </Router>
-  );
 };
 
 const App: React.FC = () => {
@@ -102,11 +49,63 @@ const App: React.FC = () => {
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/privacy" element={<Privacy />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/network" element={<Network />} />
-                <Route path="/chats" element={<Chats />} />
+                <Route path="/login" element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } />
+                <Route path="/register" element={
+                  <PublicRoute>
+                    <Register />
+                  </PublicRoute>
+                } />
+                <Route path="/auth" element={
+                  <PublicRoute>
+                    <LoginForm />
+                  </PublicRoute>
+                } />
+                <Route path="/signup" element={
+                  <PublicRoute>
+                    <SignupForm />
+                  </PublicRoute>
+                } />
+                <Route path="/auth-test" element={<AuthTest />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/project/:id" element={
+                  <ProtectedRoute>
+                    <ProjectDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/network" element={
+                  <ProtectedRoute>
+                    <Network />
+                  </ProtectedRoute>
+                } />
+                <Route path="/chat" element={
+                  <ProtectedRoute>
+                    <Chat />
+                  </ProtectedRoute>
+                } />
+                <Route path="/projects" element={
+                  <ProtectedRoute>
+                    <Projects />
+                  </ProtectedRoute>
+                } />
+                <Route path="/chats" element={
+                  <ProtectedRoute>
+                    <Chats />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </Layout>
           </Router>
