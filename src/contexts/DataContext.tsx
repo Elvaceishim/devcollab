@@ -17,6 +17,7 @@ interface DataContextType {
   getProjectRecommendations: (userId: string) => Project[];
   connectWithDeveloper: (userId: string, targetUserId: string) => void;
   sendConnectionRequest: (fromUserId: string, toUserId: string, message?: string) => void;
+  endorseSkill: (userId: string, skill: string, message: string | undefined, endorserId: string, endorserName: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -282,6 +283,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log(`Connection request from ${fromUserId} to ${toUserId}: ${message}`);
   };
 
+  const endorseSkill = (userId: string, skill: string, message: string | undefined, endorserId: string, endorserName: string) => {
+    setUsers(prevUsers =>
+      prevUsers.map(user => {
+        if (user.id === userId) {
+          const newEndorsement = {
+            id: Math.random().toString(36).substr(2, 9),
+            skill,
+            endorserId,
+            endorserName,
+            message,
+            createdAt: new Date().toISOString(),
+          };
+          return {
+            ...user,
+            endorsements: [...(user.endorsements || []), newEndorsement],
+          };
+        }
+        return user;
+      })
+    );
+  };
+
   return (
     <DataContext.Provider value={{
       projects,
@@ -299,6 +322,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getProjectRecommendations,
       connectWithDeveloper,
       sendConnectionRequest,
+      endorseSkill,
     }}>
       {children}
     </DataContext.Provider>

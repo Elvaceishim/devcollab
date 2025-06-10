@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ThumbsUp, MessageSquare, Plus, X } from 'lucide-react';
-import { User, Endorsement } from '../../types';
+import { useState } from 'react';
+import { ThumbsUp, Plus, X } from 'lucide-react';
+import { User } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
 import Button from '../common/Button';
 import Card from '../common/Card';
 
@@ -11,7 +12,8 @@ interface EndorsementSystemProps {
 }
 
 const EndorsementSystem: React.FC<EndorsementSystemProps> = ({ user, canEndorse = false }) => {
-  const { user: currentUser, endorseSkill } = useAuth();
+  const { user: currentUser } = useAuth();
+  const { endorseSkill } = useData();
   const [showEndorseModal, setShowEndorseModal] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState('');
   const [endorsementMessage, setEndorsementMessage] = useState('');
@@ -24,7 +26,7 @@ const EndorsementSystem: React.FC<EndorsementSystemProps> = ({ user, canEndorse 
   const handleEndorse = () => {
     if (!selectedSkill || !currentUser) return;
     
-    endorseSkill(user.id, selectedSkill, endorsementMessage);
+    endorseSkill(user.id, selectedSkill, endorsementMessage, currentUser.id || '', currentUser.name || '');
     setShowEndorseModal(false);
     setSelectedSkill('');
     setEndorsementMessage('');

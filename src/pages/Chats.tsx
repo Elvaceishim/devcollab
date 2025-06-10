@@ -1,6 +1,5 @@
-import React from 'react';
 import { Box, Container, Heading, Text, Grid, GridItem, VStack, HStack, Avatar, Input, Button, Card, CardBody } from '@chakra-ui/react';
-import { Send, Search, Users } from 'lucide-react';
+import { Send, Search } from 'lucide-react';
 
 const Chats = () => {
   return (

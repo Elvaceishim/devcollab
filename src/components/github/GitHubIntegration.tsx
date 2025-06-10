@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Github, ExternalLink, Star, GitFork, Calendar, Loader2 } from 'lucide-react';
+import { Github, ExternalLink, Star, GitFork, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../common/Button';
 import Card from '../common/Card';
@@ -18,8 +18,8 @@ const GitHubIntegration: React.FC = () => {
     // Mock GitHub username prompt
     const githubUsername = prompt('Enter your GitHub username:');
     if (githubUsername) {
-      updateProfile({ github: githubUsername });
-      await syncGitHubRepos();
+      if (updateProfile) await updateProfile({ github: githubUsername });
+      if (syncGitHubRepos) await syncGitHubRepos();
     }
     
     setConnecting(false);
@@ -27,7 +27,7 @@ const GitHubIntegration: React.FC = () => {
 
   const handleSyncRepos = async () => {
     setSyncing(true);
-    await syncGitHubRepos();
+    if (syncGitHubRepos) await syncGitHubRepos();
     setSyncing(false);
   };
 
@@ -92,7 +92,7 @@ const GitHubIntegration: React.FC = () => {
           {user.githubRepos && user.githubRepos.length > 0 ? (
             <div className="space-y-3">
               <h4 className="font-medium text-gray-900">Recent Repositories</h4>
-              {user.githubRepos.map(repo => (
+              {user.githubRepos.map((repo: any) => (
                 <div key={repo.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
                   <div className="flex items-start justify-between mb-2">
                     <div>

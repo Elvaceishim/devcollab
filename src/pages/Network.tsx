@@ -1,6 +1,5 @@
-import React from 'react';
 import { Box, Container, Heading, Text, SimpleGrid, Card, CardBody, Button, HStack, VStack, Avatar, Badge } from '@chakra-ui/react';
-import { Code2, Users, Star, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 const Network = () => {
   return (

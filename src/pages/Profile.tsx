@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, Clock, DollarSign, FolderSync as Sync, Camera } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, FolderSync as Sync } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
@@ -9,48 +9,104 @@ import BadgeSystem from '../components/badges/BadgeSystem';
 import EndorsementSystem from '../components/endorsements/EndorsementSystem';
 import GitHubIntegration from '../components/github/GitHubIntegration';
 import { useImageUpload } from '../hooks/useImageUpload';
+import { User } from '../types';
 
-// Add type definitions for better type safety
-interface User {
-  id: string;
+const getUserData = (user: any): User | null => {
+  if (!user) return null;
+
+  const now = new Date().toISOString();
+  const userData: User = {
+    id: user.id || '',
+    email: user.email || '',
+    name: user.user_metadata?.name || user.user_metadata?.full_name || 'Anonymous User',
+    bio: user.user_metadata?.bio || 'No bio provided yet.',
+    location: user.user_metadata?.location || 'Not specified',
+    skills: user.user_metadata?.skills || [],
+    experience: user.user_metadata?.experience || 'Junior',
+    github: user.user_metadata?.github || '',
+    linkedin: user.user_metadata?.linkedin || '',
+    portfolio: user.user_metadata?.portfolio || '',
+    hourlyRate: user.user_metadata?.hourlyRate || user.user_metadata?.hourly_rate,
+    availability: user.user_metadata?.availability || 'Available',
+    avatar: user.user_metadata?.avatar || '',
+    joinedAt: user.user_metadata?.joinedAt || now,
+    badges: user.user_metadata?.badges || [],
+    endorsements: user.user_metadata?.endorsements || [],
+    githubRepos: user.user_metadata?.githubRepos || [],
+    quizResults: user.user_metadata?.quizResults || [],
+    preferences: user.user_metadata?.preferences || {
+      projectTypes: [],
+      timeCommitment: 'flexible',
+      remoteWork: true,
+      teamSize: 'small',
+      communicationStyle: 'casual'
+    },
+    profile: user.user_metadata?.profile
+  };
+
+  return userData;
+};
+
+interface FormData {
   name: string;
-  bio?: string;
-  location?: string;
-  skills?: string[];
-  experience?: 'Junior' | 'Mid-level' | 'Senior' | 'Lead';
-  github?: string;
-  linkedin?: string;
-  portfolio?: string;
-  hourlyRate?: number;
-  availability?: 'Available' | 'Busy' | 'Not Available';
-  avatar?: string | null;
-  badges?: any[];
+  bio: string;
+  location: string;
+  skills: string;
+  experience: 'Junior' | 'Mid-level' | 'Senior' | 'Lead';
+  github: string;
+  linkedin: string;
+  portfolio: string;
+  hourlyRate: string;
+  availability: 'Available' | 'Busy' | 'Not Available';
+  avatar: string;
 }
 
 const Profile: React.FC = () => {
   const { user, updateProfile, syncGitHubRepos } = useAuth();
-  const { uploadAvatar, isUploading: avatarUploading } = useImageUpload();
+  const { uploadAvatar } = useImageUpload();
   const [isEditing, setIsEditing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Initialize form data with better defaults and null checks
-  const [formData, setFormData] = useState({
-    name: user?.name ?? '',
-    bio: user?.bio ?? '',
-    location: user?.location ?? '',
-    skills: Array.isArray(user?.skills) ? user.skills.join(', ') : '',
-    experience: user?.experience ?? 'Junior',
-    github: user?.github ?? '',
-    linkedin: user?.linkedin ?? '',
-    portfolio: user?.portfolio ?? '',
-    hourlyRate: user?.hourlyRate?.toString() ?? '',
-    availability: user?.availability ?? 'Available',
-    avatar: user?.avatar ?? null
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    bio: '',
+    location: '',
+    skills: '',
+    experience: 'Junior',
+    github: '',
+    linkedin: '',
+    portfolio: '',
+    hourlyRate: '',
+    availability: 'Available',
+    avatar: ''
   });
 
-  // Early return with loading state instead of null
-  if (!user) {
+  // Get user data with proper null handling
+  const userData = getUserData(user);
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        name: userData.name,
+        bio: userData.bio,
+        location: userData.location,
+        skills: userData.skills.join(', '),
+        experience: userData.experience,
+        github: userData.github || '',
+        linkedin: userData.linkedin || '',
+        portfolio: userData.portfolio || '',
+        hourlyRate: userData.hourlyRate?.toString() || '',
+        availability: userData.availability,
+        avatar: userData.avatar || ''
+      });
+    }
+  }, [userData]);
+
+  // Early return with loading state
+  if (!userData) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center items-center min-h-64">
@@ -67,27 +123,40 @@ const Profile: React.FC = () => {
 
   const handleSave = async () => {
     try {
+      setError(null);
+      
+      if (!formData.name.trim()) {
+        setError('Name is required');
+        return;
+      }
+  
       const skillsArray = formData.skills
         .split(',')
         .map(s => s.trim())
         .filter(s => s.length > 0);
       
+      const hourlyRate = formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined;
+      if (formData.hourlyRate && (isNaN(hourlyRate!) || hourlyRate! < 0)) {
+        setError('Please enter a valid hourly rate');
+        return;
+      }
+      
+      // This will now properly update the user state in AuthContext
       await updateProfile({
-        name: formData.name,
-        bio: formData.bio,
-        location: formData.location,
+        name: formData.name.trim(),
+        bio: formData.bio.trim(),
+        location: formData.location.trim(),
         skills: skillsArray,
-        experience: formData.experience as User['experience'],
-        github: formData.github,
-        linkedin: formData.linkedin,
-        portfolio: formData.portfolio,
-        hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : undefined,
-        availability: formData.availability as User['availability'],
+        experience: formData.experience,
+        github: formData.github.trim(),
+        linkedin: formData.linkedin.trim(),
+        portfolio: formData.portfolio.trim(),
+        hourlyRate,
+        availability: formData.availability,
         avatar: formData.avatar || undefined
       });
       
       setIsEditing(false);
-      setError(null);
     } catch (error) {
       console.error('Error updating profile:', error);
       setError('Failed to update profile. Please try again.');
@@ -96,32 +165,36 @@ const Profile: React.FC = () => {
 
   const handleCancel = () => {
     // Reset form data to current user data
-    setFormData({
-      name: user.name ?? '',
-      bio: user.bio ?? '',
-      location: user.location ?? '',
-      skills: Array.isArray(user.skills) ? user.skills.join(', ') : '',
-      experience: user.experience ?? 'Junior',
-      github: user.github ?? '',
-      linkedin: user.linkedin ?? '',
-      portfolio: user.portfolio ?? '',
-      hourlyRate: user.hourlyRate?.toString() ?? '',
-      availability: user.availability ?? 'Available',
-      avatar: user.avatar ?? null
-    });
+    if (userData) {
+      setFormData({
+        name: userData.name,
+        bio: userData.bio,
+        location: userData.location,
+        skills: userData.skills.join(', '),
+        experience: userData.experience,
+        github: userData.github || '',
+        linkedin: userData.linkedin || '',
+        portfolio: userData.portfolio || '',
+        hourlyRate: userData.hourlyRate?.toString() || '',
+        availability: userData.availability,
+        avatar: userData.avatar || ''
+      });
+    }
     setIsEditing(false);
+    setError(null);
   };
 
   const handleSyncGitHub = async () => {
     if (!syncGitHubRepos) {
-      console.warn('syncGitHubRepos function not available');
+      setError('GitHub sync is not available');
       return;
     }
     
     setSyncing(true);
+    setError(null);
+    
     try {
       await syncGitHubRepos();
-      setError(null);
     } catch (error) {
       console.error('Error syncing GitHub repos:', error);
       setError('Failed to sync GitHub repos. Please try again.');
@@ -130,24 +203,24 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleAvatarChange = async (file: File | null, previewUrl: string | null) => {
+  const handleAvatarChange = async (file: File | null) => {
     if (file) {
       try {
+        setError(null);
         const uploadedUrl = await uploadAvatar(file);
         if (uploadedUrl) {
           setFormData(prev => ({ ...prev, avatar: uploadedUrl }));
-          setError(null);
         }
       } catch (err) {
         console.error('Error uploading avatar:', err);
         setError('Failed to upload avatar. Please try again.');
       }
     } else {
-      setFormData(prev => ({ ...prev, avatar: null }));
+      setFormData(prev => ({ ...prev, avatar: '' }));
     }
   };
 
-  const getAvailabilityColor = (availability: string) => {
+  const getAvailabilityColor = (availability: string): string => {
     switch (availability) {
       case 'Available': return 'bg-green-100 text-green-800';
       case 'Busy': return 'bg-yellow-100 text-yellow-800';
@@ -156,20 +229,35 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Safe URL construction
-  const getGitHubUrl = (username: string) => {
+  // Safe URL construction with better validation
+  const getGitHubUrl = (username: string): string => {
     if (!username) return '';
-    return username.startsWith('http') ? username : `https://github.com/${username}`;
+    const cleanUsername = username.trim();
+    if (cleanUsername.startsWith('http')) return cleanUsername;
+    // Remove @ symbol if present
+    const cleanedUsername = cleanUsername.replace(/^@/, '');
+    return `https://github.com/${cleanedUsername}`;
   };
 
-  const getLinkedInUrl = (username: string) => {
+  const getLinkedInUrl = (username: string): string => {
     if (!username) return '';
-    return username.startsWith('http') ? username : `https://linkedin.com/in/${username}`;
+    const cleanUsername = username.trim();
+    if (cleanUsername.startsWith('http')) return cleanUsername;
+    // Remove @ symbol if present
+    const cleanedUsername = cleanUsername.replace(/^@/, '');
+    return `https://linkedin.com/in/${cleanedUsername}`;
   };
 
-  const getPortfolioUrl = (url: string) => {
+  const getPortfolioUrl = (url: string): string => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `https://${url}`;
+    const cleanUrl = url.trim();
+    if (cleanUrl.startsWith('http')) return cleanUrl;
+    return `https://${cleanUrl}`;
+  };
+
+  // Add a type guard to ensure userData is a User
+  const isUser = (data: any): data is User => {
+    return data && typeof data === 'object' && 'id' in data && 'email' in data;
   };
 
   return (
@@ -177,15 +265,15 @@ const Profile: React.FC = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
         <div className="flex items-center space-x-3">
-          {user.github && syncGitHubRepos && (
+          {userData.github && syncGitHubRepos && (
             <Button
               variant="outline"
               onClick={handleSyncGitHub}
-              loading={syncing}
+              disabled={syncing}
               size="sm"
             >
               <Sync className="h-4 w-4 mr-2" />
-              Sync GitHub
+              {syncing ? 'Syncing...' : 'Sync GitHub'}
             </Button>
           )}
           {!isEditing ? (
@@ -209,7 +297,9 @@ const Profile: React.FC = () => {
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 font-medium">{error}</div>
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-sm text-red-600 font-medium">{error}</div>
+        </div>
       )}
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -219,13 +309,14 @@ const Profile: React.FC = () => {
             {/* Avatar Upload */}
             <div className="mb-6">
               <ImageUpload
-                currentImage={user.avatar}
+                currentImage={formData.avatar || ''}
                 onImageChange={handleAvatarChange}
                 onImageUpload={uploadAvatar}
+                className="w-32 h-32"
                 size="lg"
                 shape="circle"
                 label="Change Avatar"
-                className="mx-auto"
+                accept="image/*"
               />
             </div>
             
@@ -236,28 +327,29 @@ const Profile: React.FC = () => {
                 onChange={handleChange}
                 className="text-center text-xl font-bold mb-2"
                 placeholder="Enter your name"
+                required
               />
             ) : (
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{user.name || 'Anonymous User'}</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">{userData.name || 'Anonymous User'}</h2>
             )}
 
             <div className="flex justify-center mb-4">
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(user.availability || 'Available')}`}>
-                {user.availability || 'Available'}
+              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(userData.availability)}`}>
+                {userData.availability}
               </span>
             </div>
 
-            {user.location && (
+            {userData.location && (
               <div className="flex items-center justify-center text-gray-600 mb-4">
                 <MapPin className="h-4 w-4 mr-1" />
-                <span>{user.location}</span>
+                <span>{userData.location}</span>
               </div>
             )}
 
             <div className="space-y-2">
-              {user.github && (
+              {userData.github && (
                 <a
-                  href={getGitHubUrl(user.github)}
+                  href={getGitHubUrl(userData.github)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
@@ -266,9 +358,9 @@ const Profile: React.FC = () => {
                   GitHub
                 </a>
               )}
-              {user.linkedin && (
+              {userData.linkedin && (
                 <a
-                  href={getLinkedInUrl(user.linkedin)}
+                  href={getLinkedInUrl(userData.linkedin)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
@@ -277,9 +369,9 @@ const Profile: React.FC = () => {
                   LinkedIn
                 </a>
               )}
-              {user.portfolio && (
+              {userData.portfolio && (
                 <a
-                  href={getPortfolioUrl(user.portfolio)}
+                  href={getPortfolioUrl(userData.portfolio)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
@@ -295,7 +387,15 @@ const Profile: React.FC = () => {
           <GitHubIntegration />
 
           {/* Badges - Only render if badges exist */}
-          {user.badges && <BadgeSystem user={user} badges={user.badges} />}
+          {isUser(userData) && userData.badges && userData.badges.length > 0 && (() => {
+            const validUser = userData;
+            return (
+              <BadgeSystem 
+                user={validUser}
+                badges={validUser.badges}
+              />
+            );
+          })()}
         </div>
 
         <div className="lg:col-span-2 space-y-6">
@@ -312,7 +412,7 @@ const Profile: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-vertical"
               />
             ) : (
-              <p className="text-gray-600 whitespace-pre-wrap">{user.bio || 'No bio provided yet.'}</p>
+              <p className="text-gray-600 whitespace-pre-wrap">{userData.bio || 'No bio provided yet.'}</p>
             )}
           </Card>
 
@@ -340,7 +440,7 @@ const Profile: React.FC = () => {
                     <option value="Lead">Lead</option>
                   </select>
                 ) : (
-                  <p className="text-gray-600">{user.experience || 'Not specified'}</p>
+                  <p className="text-gray-600">{userData.experience || 'Not specified'}</p>
                 )}
               </div>
 
@@ -360,8 +460,8 @@ const Profile: React.FC = () => {
                     <option value="Not Available">Not Available</option>
                   </select>
                 ) : (
-                  <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(user.availability || 'Available')}`}>
-                    {user.availability || 'Available'}
+                  <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(userData.availability)}`}>
+                    {userData.availability}
                   </span>
                 )}
               </div>
@@ -378,7 +478,7 @@ const Profile: React.FC = () => {
                     placeholder="e.g., San Francisco, CA"
                   />
                 ) : (
-                  <p className="text-gray-600">{user.location || 'Not specified'}</p>
+                  <p className="text-gray-600">{userData.location || 'Not specified'}</p>
                 )}
               </div>
 
@@ -398,7 +498,7 @@ const Profile: React.FC = () => {
                   />
                 ) : (
                   <p className="text-gray-600">
-                    {user.hourlyRate ? `$${user.hourlyRate}/hour` : 'Not specified'}
+                    {userData.hourlyRate ? `$${userData.hourlyRate}/hour` : 'Not specified'}
                   </p>
                 )}
               </div>
@@ -435,7 +535,7 @@ const Profile: React.FC = () => {
                     placeholder="username"
                   />
                 ) : (
-                  <p className="text-gray-600">{user.github || 'Not provided'}</p>
+                  <p className="text-gray-600">{userData.github || 'Not provided'}</p>
                 )}
               </div>
 
@@ -451,7 +551,7 @@ const Profile: React.FC = () => {
                     placeholder="username"
                   />
                 ) : (
-                  <p className="text-gray-600">{user.linkedin || 'Not provided'}</p>
+                  <p className="text-gray-600">{userData.linkedin || 'Not provided'}</p>
                 )}
               </div>
 
@@ -468,7 +568,7 @@ const Profile: React.FC = () => {
                     type="url"
                   />
                 ) : (
-                  <p className="text-gray-600">{user.portfolio || 'Not provided'}</p>
+                  <p className="text-gray-600">{userData.portfolio || 'Not provided'}</p>
                 )}
               </div>
             </div>

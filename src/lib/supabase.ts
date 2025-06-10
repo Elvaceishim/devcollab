@@ -18,7 +18,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const AVATAR_BUCKET = 'avatars';
 
 // Helper function to upload image to Supabase storage
-export const uploadImage = async (file: File, bucket: string, path: string) => {
+export const uploadImage = async (file: File, bucket: string) => {
   try {
     // Create a unique filename with timestamp
     const timestamp = Date.now();
