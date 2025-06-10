@@ -18,4 +18,26 @@ self.addEventListener('activate', (event) => {
       })
     ])
   );
+});
+
+// Handle message events
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Handle fetch events
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return new Response('Offline', {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: new Headers({
+          'Content-Type': 'text/plain'
+        })
+      });
+    })
+  );
 }); 
