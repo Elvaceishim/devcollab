@@ -24,6 +24,8 @@ import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
 import theme from './theme';
 import Layout from './components/Layout';
+import Projects from './pages/Projects';
+import Chats from './pages/Chats';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -102,6 +104,9 @@ const App: React.FC = () => {
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/network" element={<Network />} />
+                <Route path="/chats" element={<Chats />} />
               </Routes>
             </Layout>
           </Router>
