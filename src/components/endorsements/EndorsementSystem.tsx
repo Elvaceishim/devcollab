@@ -16,6 +16,11 @@ const EndorsementSystem: React.FC<EndorsementSystemProps> = ({ user, canEndorse 
   const [selectedSkill, setSelectedSkill] = useState('');
   const [endorsementMessage, setEndorsementMessage] = useState('');
 
+  // Check if user is defined and has skills
+  if (!user || !user.skills) {
+    return <div>No skills available.</div>;
+  }
+
   const handleEndorse = () => {
     if (!selectedSkill || !currentUser) return;
     
