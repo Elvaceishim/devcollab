@@ -12,6 +12,17 @@ import Network from './pages/Network';
 import Chat from './pages/Chat';
 import ProjectDetail from './pages/ProjectDetail';
 import AuthTest from './components/auth/AuthTest';
+import { ChakraProvider, CSSReset } from '@chakra-ui/react';
+import PrivateRoute from './components/auth/PrivateRoute';
+import Navbar from './components/common/Navbar';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import About from './pages/About';
+import FAQ from './pages/FAQ';
+import Contact from './pages/Contact';
+import Privacy from './pages/Privacy';
+import theme from './theme';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -76,11 +87,33 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <AppContent />
-      </DataProvider>
-    </AuthProvider>
+    <ChakraProvider theme={theme}>
+      <CSSReset />
+      <AuthProvider>
+        <DataProvider>
+          <Router>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route
+                path="/profile"
+                element={
+                  <PrivateRoute>
+                    <Profile />
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+          </Router>
+        </DataProvider>
+      </AuthProvider>
+    </ChakraProvider>
   );
 };
 
