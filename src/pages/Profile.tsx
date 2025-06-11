@@ -306,8 +306,7 @@ const Profile: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
           {/* Basic Info Card */}
           <Card className="p-6 text-center">
-            {/* Avatar Upload */}
-            <div className="mb-6">
+            <div className="flex flex-col items-center space-y-4 mb-6">
               <ImageUpload
                 currentImage={formData.avatar || ''}
                 onImageChange={handleAvatarChange}
@@ -318,34 +317,27 @@ const Profile: React.FC = () => {
                 label="Change Avatar"
                 accept="image/*"
               />
+              {isEditing ? (
+                <Input
+                  value={formData.name}
+                  name="name"
+                  onChange={handleChange}
+                  className="text-center text-xl font-bold mb-2"
+                  placeholder="Enter your name"
+                  required
+                />
+              ) : (
+                <h2 className="text-xl font-bold text-gray-900 mb-2">{userData.name || 'Anonymous User'}</h2>
+              )}
+              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(userData.availability)}`}>{userData.availability}</span>
+              {userData.location && (
+                <div className="flex items-center justify-center text-gray-600">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>{userData.location}</span>
+                </div>
+              )}
             </div>
             
-            {isEditing ? (
-              <Input
-                value={formData.name}
-                name="name"
-                onChange={handleChange}
-                className="text-center text-xl font-bold mb-2"
-                placeholder="Enter your name"
-                required
-              />
-            ) : (
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{userData.name || 'Anonymous User'}</h2>
-            )}
-
-            <div className="flex justify-center mb-4">
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(userData.availability)}`}>
-                {userData.availability}
-              </span>
-            </div>
-
-            {userData.location && (
-              <div className="flex items-center justify-center text-gray-600 mb-4">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span>{userData.location}</span>
-              </div>
-            )}
-
             <div className="space-y-2">
               {userData.github && (
                 <a
