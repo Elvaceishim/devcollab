@@ -10,6 +10,7 @@ import EndorsementSystem from '../components/endorsements/EndorsementSystem';
 import GitHubIntegration from '../components/github/GitHubIntegration';
 import { useImageUpload } from '../hooks/useImageUpload';
 import { User } from '../types';
+import { supabase, AVATAR_BUCKET, uploadImage, deleteImage } from '@/lib/supabase';
 
 const getUserData = (user: any): User | null => {
   if (!user) return null;
@@ -64,6 +65,7 @@ interface FormData {
 const Profile: React.FC = () => {
   const { user, updateProfile, syncGitHubRepos } = useAuth();
   const { uploadAvatar } = useImageUpload();
+  const [isUploading, setIsUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +107,6 @@ const Profile: React.FC = () => {
     }
   }, [userData]);
 
-  // Early return with loading state
   if (!userData) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -121,45 +122,43 @@ const Profile: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
+const [isSaving, setIsSaving] = useState(false); // Add this state
+
+const handleSave = async () => {
+  setIsSaving(true);
+  setError(null);
+
   try {
-    // 1. Prepare data
     const profileData = {
       name: formData.name,
       bio: formData.bio,
-      hourlyRate: parseFloat(formData.hourlyRate) || 0,
-      skills: formData.skills.split(',').map(skill => skill.trim()),
-      // Include other fields...
+      location: formData.location,
+      skills: formData.skills.split(',').map(s => s.trim()),
+      experience: formData.experience,
+      github: formData.github,
+      linkedin: formData.linkedin,
+      portfolio: formData.portfolio,
+      hourly_rate: parseFloat(formData.hourlyRate) || 0,
+      availability: formData.availability,
+      avatar: formData.avatar
     };
 
-    // 2. Simple validation
-    if (!profileData.name) {
-      alert("Name is required!");
-      return;
+    // Validate
+    if (!profileData.name.trim()) {
+      throw new Error('Name is required');
     }
 
-    // 3. Mock save function (temporary - replace with real API later)
-    const mockSave = async (data: any) => {
-      console.log("Saving:", data);
-      return new Promise(resolve => setTimeout(() => resolve(data), 1000));
-    };
-
-    const savedData = await mockSave(profileData);
-    console.log("Saved successfully:", savedData);
-    
-    // 4. Update UI state
-    setUser(prev => ({ ...prev, ...savedData }));
+    await updateProfile(profileData);
     setIsEditing(false);
-    alert("Profile updated!");
 
   } catch (error) {
-    console.error("Save failed:", error);
-    alert("Error saving profile");
+    setError(error instanceof Error ? error.message : 'Update failed');
+  } finally {
+    setIsSaving(false);
   }
 };
 
   const handleCancel = () => {
-    // Reset form data to current user data
     if (userData) {
       setFormData({
         name: userData.name,
@@ -199,19 +198,43 @@ const Profile: React.FC = () => {
   };
 
   const handleAvatarChange = async (file: File | null) => {
-    if (file) {
-      try {
-        setError(null);
-        const uploadedUrl = await uploadAvatar(file);
-        if (uploadedUrl) {
-          setFormData(prev => ({ ...prev, avatar: uploadedUrl }));
-        }
-      } catch (err) {
-        console.error('Error uploading avatar:', err);
-        setError('Failed to upload avatar. Please try again.');
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file (JPEG, PNG, etc.)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setError('File size must be less than 5MB');
+      return;
+    }
+
+  setIsUploading(true);
+  setError(null);
+
+    try {
+      setError(null);
+
+      const { publicUrl } = await uploadImage(file, AVATAR_BUCKET);
+
+      const { error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', user.id);
+
+      if (error) throw error;
+
+      setFormData(prev => ({ ...prev, avatar: publicUrl }));
+    
+      if (formData.avatar) {
+        const oldPath = formData.avatar.split('/').pop();
+        await deleteImage(AVATAR_BUCKET, oldPath!);
       }
-    } else {
-      setFormData(prev => ({ ...prev, avatar: '' }));
+
+    } catch (error) {
+    console.error('Avatar upload failed:', error);
+    setError('Failed to update avatar. Please try again.');
     }
   };
 
@@ -224,7 +247,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Safe URL construction with better validation
   const getGitHubUrl = (username: string): string => {
     if (!username) return '';
     const cleanUsername = username.trim();
@@ -250,7 +272,6 @@ const Profile: React.FC = () => {
     return `https://${cleanUrl}`;
   };
 
-  // Add a type guard to ensure userData is a User
   const isUser = (data: any): data is User => {
     return data && typeof data === 'object' && 'id' in data && 'email' in data;
   };
@@ -306,6 +327,7 @@ const Profile: React.FC = () => {
                 currentImage={formData.avatar || ''}
                 onImageChange={handleAvatarChange}
                 onImageUpload={uploadAvatar}
+                loading={isUploading} 
                 className="w-32 h-32"
                 size="lg"
                 shape="circle"

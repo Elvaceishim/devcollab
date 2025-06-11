@@ -51,14 +51,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (error) throw error;
   };
 
-  const updateProfile = async (profileData: any) => {
-    const { error } = await supabase
+const updateProfile = async (profileData: Partial<User>) => {
+  try {
+    const { data: user, error } = await supabase
       .from('profiles')
-      .update(profileData)
-      .eq('id', user?.id);
+      .update({
+        name: profileData.name,
+        bio: profileData.bio,
+        skills: profileData.skills,
+        experience: profileData.experience,
+      })
+      .eq('id', currentUser.id)
+      .select()
+      .single();
 
     if (error) throw error;
-  };
+    return user;
+  } catch (error) {
+    console.error('Profile update error:', error);
+    throw error;
+  }
+};
+
+return {
+  user,
+  updateProfile,
+};
 
   const value = {
     user,

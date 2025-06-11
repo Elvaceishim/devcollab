@@ -22,5 +22,56 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+// Edit Toggle Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const editToggle = document.getElementById('edit-toggle');
+  const saveButton = document.getElementById('save-changes');
+  
+  if (editToggle) {
+    editToggle.addEventListener('click', function() {
+      const editables = document.querySelectorAll('.editable');
+      editables.forEach(el => {
+        el.disabled = false;
+        el.style.backgroundColor = '#f9f9f9';
+      });
+      saveButton.style.display = 'inline-block';
+      this.style.display = 'none';
+    });
+  }
+
+  if (saveButton) {
+    saveButton.addEventListener('click', function() {
+      // Prepare data object
+      const profileData = {
+        name: document.getElementById('profile-name').value,
+        css: document.getElementById('profile-css').value
+        // Add other fields here
+      };
+      
+      // Send to backend (example using Fetch API)
+      fetch('/api/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData)
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Update failed');
+        return response.json();
+      })
+      .then(data => {
+        alert('Profile updated successfully!');
+        window.location.reload();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating profile');
+      });
+    });
+  }
+});
+</script>
   </body>
 </html>

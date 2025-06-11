@@ -1,84 +1,86 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+type UploadResponse = {
+  data: {
+    path: string;
+  };
+  publicUrl: string;
+};
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Log environment variable status (without exposing values)
-console.log('Supabase URL configured:', !!supabaseUrl);
-console.log('Supabase Anon Key configured:', !!supabaseAnonKey);
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please check your configuration.');
-  throw new Error('Missing Supabase environment variables');
+  const errorMsg = 'Missing Supabase environment variables';
+  console.error(errorMsg, {
+    urlConfigured: !!supabaseUrl,
+    keyConfigured: !!supabaseAnonKey
+  });
+  throw new Error(errorMsg);
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
 
-// Storage bucket name for user avatars
 export const AVATAR_BUCKET = 'avatars';
 
-// Helper function to upload image to Supabase storage
-export const uploadImage = async (file: File, bucket: string) => {
-  try {
-    // Create a unique filename with timestamp
-    const timestamp = Date.now();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${timestamp}.${fileExt}`;
+export const uploadImage = async (file: File, bucket: string): Promise<UploadResponse> => {
+  const timestamp = Date.now();
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Math.random().toString(36).substring(2, 9)}_${timestamp}.${fileExt}`;
+  const filePath = `${fileName}`;
 
-    // Upload the file
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: true
-      });
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type
+    });
 
-    if (error) {
-      console.error('Upload error:', error);
-      throw error;
-    }
+  if (error) throw error;
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(data.path);
 
-    return { data, publicUrl };
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    throw error;
-  }
+  return { data, publicUrl };
 };
 
-// Helper function to delete image from Supabase storage
-export const deleteImage = async (bucket: string, path: string) => {
-  try {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path]);
 
-    if (error) {
-      throw error;
-    }
+export const deleteImage = async (bucket: string, path: string): Promise<void> => {
+  const { error } = await supabase.storage
+    .from(bucket)
+    .remove([path]);
 
-    return true;
-  } catch (error) {
-    console.error('Error deleting image:', error);
-    throw error;
-  }
+  if (error) throw error;
 };
 
-// Helper function to get public URL for an image
-export const getImageUrl = (bucket: string, path: string) => {
+export const getImageUrl = (
+  bucket: string, 
+  path: string, 
+  options?: {
+    width?: number;
+    height?: number;
+    quality?: number;
+  }
+): string => {
   const { data: { publicUrl } } = supabase.storage
     .from(bucket)
     .getPublicUrl(path, {
-      transform: {
-        width: 400,
-        height: 400,
-        quality: 80
-      }
+      transform: options ? {
+        width: options.width,
+        height: options.height,
+        quality: options.quality
+      } : undefined
     });
-  
+
   return publicUrl;
 };
+
+export type RealtimeSubscription = ReturnType<typeof supabase.channel>;
