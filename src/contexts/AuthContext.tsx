@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (error) throw error;
   };
 
-const updateProfile = async (profileData: Partial<User>) => {
+const updateProfile = async (profileData: any) => {
   try {
     const { data: user, error } = await supabase
       .from('profiles')

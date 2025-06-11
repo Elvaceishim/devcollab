@@ -122,7 +122,7 @@ const Profile: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-const [isSaving, setIsSaving] = useState(false); // Add this state
+const [, setIsSaving] = useState(false); // Add this state
 
 const handleSave = async () => {
   setIsSaving(true);
@@ -426,7 +426,7 @@ const handleSave = async () => {
           </Card>
 
           {/* Skills & Endorsements */}
-          <EndorsementSystem user={user} canEndorse={false} />
+          <EndorsementSystem user={userData} canEndorse={false} />
 
           {/* Professional Details */}
           <Card className="p-6">
@@ -589,3 +589,10 @@ const handleSave = async () => {
 };
 
 export default Profile;
+
+export interface AuthContextType {
+  user: User | null;
+  updateProfile: (profileData: any) => Promise<void>;
+  syncGitHubRepos: () => Promise<void>;
+  // ...other properties
+}

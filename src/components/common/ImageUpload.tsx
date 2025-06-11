@@ -2,15 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X, Camera, Loader2, AlertCircle, Check } from 'lucide-react';
 import Button from './Button';
 
-interface ImageUploadProps {
-  currentImage?: string;
-  onImageChange: (file: File | null, previewUrl: string | null) => void;
+export interface ImageUploadProps {
+  currentImage: string;
+  onImageChange: (file: File | null) => Promise<void>;
   onImageUpload: (file: File) => Promise<string | null>;
+  accept: string;
+  loading: boolean; // <-- Add this line
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   shape?: 'circle' | 'square';
   label?: string;
-  accept?: string;
   maxSize?: number; // in MB
   disabled?: boolean;
 }
@@ -26,6 +27,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   accept = 'image/*',
   maxSize = 5,
   disabled = false,
+  loading, // <-- Add this line
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage || null);
   const [uploading, setUploading] = useState(false);
@@ -74,21 +76,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     // Create preview
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
-    onImageChange(file, objectUrl);
+    onImageChange(file);
 
     try {
       setUploading(true);
       const uploadedUrl = await onImageUpload(file);
       if (uploadedUrl) {
         setPreviewUrl(uploadedUrl);
-        onImageChange(null, uploadedUrl); // Pass null for file since upload is complete
+        onImageChange(null); // Pass null for file since upload is complete
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       }
     } catch (err) {
       setError('Upload failed. Please try again.');
       setPreviewUrl(currentImage || null);
-      onImageChange(null, currentImage || null);
+      onImageChange(null);
     } finally {
       setUploading(false);
     }
@@ -98,7 +100,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     if (uploading) return;
     setPreviewUrl(null);
     setError(null);
-    onImageChange(null, null);
+    onImageChange(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -110,12 +112,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
-  // Update preview when currentImage changes
   useEffect(() => {
     setPreviewUrl(currentImage || null);
   }, [currentImage]);
 
-  // Cleanup object URLs
   useEffect(() => {
     return () => {
       if (previewUrl && previewUrl.startsWith('blob:')) {
@@ -183,7 +183,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <Button
               type="button"
               variant="outline"
-              size={size === 'sm' ? 'xs' : 'sm'}
+              size={size === 'sm' ? 'sm' : 'md'}
               onClick={handleClick}
               disabled={uploading}
               className="w-full max-w-[200px]"
