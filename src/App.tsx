@@ -10,7 +10,6 @@ import Network from './pages/Network';
 import Chat from './pages/Chat';
 import ProjectDetail from './pages/ProjectDetail';
 import AuthTest from './components/auth/AuthTest';
-import { ChakraProvider, ColorModeScript } from '@chakra-ui/react';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -22,6 +21,8 @@ import theme from './theme';
 import Layout from './components/Layout';
 import Projects from './pages/Projects';
 import Chats from './pages/Chats';
+import { ChakraProvider } from '@chakra-ui/react';
+import { ColorModeScript } from '@chakra-ui/react';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -32,7 +33,6 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   return !user ? <>{children}</> : <Navigate to="/dashboard" />;
 };
-
 const App: React.FC = () => {
   return (
     <ChakraProvider theme={theme}>
@@ -111,6 +111,7 @@ const App: React.FC = () => {
       </AuthProvider>
     </ChakraProvider>
   );
+};
 };
 
 export default App;

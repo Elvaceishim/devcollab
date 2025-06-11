@@ -1,19 +1,15 @@
 import {
   Box,
-  Flex,
   Button,
   Stack,
   useColorModeValue,
   useDisclosure,
   IconButton,
   HStack,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   useColorMode,
   Text
 } from '@chakra-ui/react';
+import { Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon, MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,7 +27,7 @@ const Navbar = () => {
 
   return (
     <Box>
-      <Flex
+      <Box
         bg={useColorModeValue('white', 'gray.800')}
         color={useColorModeValue('gray.600', 'white')}
         minH={'60px'}
@@ -42,19 +38,20 @@ const Navbar = () => {
         borderColor={useColorModeValue('gray.200', 'gray.900')}
         align={'center'}
       >
-        <Flex
-          flex={{ base: 1, md: 'auto' }}
+        <Box
           ml={{ base: -2 }}
-          display={{ base: 'flex', md: 'none' }}
+          display={{ base: 'block', md: 'none' }}
         >
           <IconButton
             onClick={onToggle}
-            icon={isOpen ? <CloseIcon w={3} h={3} /> : <HamburgerIcon w={5} h={5} />}
             variant={'ghost'}
             aria-label={'Toggle Navigation'}
-          />
-        </Flex>
-        <Flex flex={{ base: 1 }} justify={{ base: 'center', md: 'start' }}>
+          >
+            {isOpen ? <CloseIcon w={3} h={3} /> : <HamburgerIcon w={5} h={5} />}
+          </IconButton>
+        </Box>
+        <div className="flex flex-1 items-center justify-center md:justify-start">
+        <Box className="flex flex-1 items-center justify-center md:justify-start">
           <Text
             textAlign={useColorModeValue('left', 'center')}
             fontFamily={'heading'}
@@ -67,7 +64,7 @@ const Navbar = () => {
             DevCollab
           </Text>
 
-          <Flex display={{ base: 'none', md: 'flex' }} ml={10}>
+          <Box display={{ base: 'none', md: 'block' }} ml={10}>
             <Stack direction={'row'} spacing={4}>
               <Button
                 as={RouterLink}
@@ -97,21 +94,20 @@ const Navbar = () => {
                 Contact
               </Button>
             </Stack>
-          </Flex>
-        </Flex>
-
+          </Box>
+        </Box>
         <Stack
-          flex={{ base: 1, md: 0 }}
+        <Stack
           justify={'flex-end'}
           direction={'row'}
           spacing={6}
         >
-          <IconButton
             aria-label="Toggle color mode"
-            icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
             onClick={toggleColorMode}
             variant="ghost"
-          />
+          >
+            {colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
+          </IconButton>
           {user ? (
             <Menu>
               <MenuButton
@@ -127,7 +123,7 @@ const Navbar = () => {
                 <MenuItem as={RouterLink} to="/profile">
                   Profile
                 </MenuItem>
-                <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
+                <MenuItem value="signout" onClick={handleSignOut}>Sign Out</MenuItem>
               </MenuList>
             </Menu>
           ) : (
@@ -143,6 +139,8 @@ const Navbar = () => {
               </Button>
               <Button
                 as={RouterLink}
+              <Button
+                as={RouterLink}
                 to="/register"
                 display={{ base: 'none', md: 'inline-flex' }}
                 fontSize={'sm'}
@@ -155,10 +153,8 @@ const Navbar = () => {
               >
                 Sign Up
               </Button>
-            </HStack>
-          )}
         </Stack>
-      </Flex>
+      </div>
 
       <Box
         display={{ base: isOpen ? 'block' : 'none', md: 'none' }}

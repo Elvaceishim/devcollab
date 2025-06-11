@@ -30,7 +30,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   loading, // <-- Add this line
 }: ImageUploadProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage || null);
-  const [uploading, setUploading] = useState(false);
+  // const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,7 +79,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     onImageChange(file);
 
     try {
-      setUploading(true);
       const uploadedUrl = await onImageUpload(file);
       if (uploadedUrl) {
         setPreviewUrl(uploadedUrl);
@@ -91,8 +90,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setError('Upload failed. Please try again.');
       setPreviewUrl(currentImage || null);
       onImageChange(null);
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -100,7 +97,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     if (uploading) return;
     setPreviewUrl(null);
     setError(null);
-    onImageChange(null);
+    if (loading) return;
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -125,113 +122,110 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   }, [previewUrl]);
 
   return (
-    <div className={`relative ${className}`}>
-      <div className="flex flex-col items-center gap-3">
-        {/* Image Preview Container */}
-        <div 
-          className={`relative ${sizeClasses[size]} ${shapeClasses[shape]} overflow-hidden border-2 ${disabled ? 'border-gray-200' : 'border-gray-300 hover:border-primary-500'} transition-all bg-gray-50 group`}
-          onClick={handleClick}
-        >
-          {previewUrl ? (
-            <>
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="w-full h-full object-cover"
-                onError={() => {
-                  setError('Failed to load image');
-                  setPreviewUrl(null);
-                }}
-              />
-              {uploading && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 text-white animate-spin" />
-                </div>
-              )}
-              {!uploading && !disabled && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveImage();
-                  }}
-                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
-                  aria-label="Remove image"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
-              {uploading ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <>
-                  <Camera className={`${size === 'sm' ? 'h-4 w-4' : 'h-6 w-6'} mb-1`} />
-                  <span className={`${size === 'sm' ? 'text-xs' : 'text-sm'} font-medium`}>
-                    {size === 'sm' ? 'Add' : 'Add Photo'}
-                  </span>
-                </>
-              )}
+<div className={`relative ${className}`}>
+  <div className="flex flex-col items-center gap-3">
+    {/* Image Preview Container */}
+    <div 
+      className={`relative ${sizeClasses[size]} ${shapeClasses[shape]} overflow-hidden border-2 ${disabled ? 'border-gray-200' : 'border-gray-300 hover:border-primary-500'} transition-all bg-gray-50 group`}
+      onClick={handleClick}
+    >
+      {previewUrl ? (
+        <>
+          <img
+            src={previewUrl}
+            alt="Preview"
+            className="w-full h-full object-cover"
+            onError={() => {
+              setError('Failed to load image');
+              setPreviewUrl(null);
+            }}
+          />
+          {loading && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 text-white animate-spin" />
             </div>
           )}
-        </div>
-
-        {/* Upload Controls */}
-        {!disabled && (
-          <div className="flex flex-col items-center gap-2 w-full">
-            <Button
-              type="button"
-              variant="outline"
-              size={size === 'sm' ? 'sm' : 'md'}
-              onClick={handleClick}
-              disabled={uploading}
-              className="w-full max-w-[200px]"
+          {!loading && !disabled && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveImage();
+              }}
+              className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
+              aria-label="Remove image"
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Uploading...
-                </>
-              ) : success ? (
-                <>
-                  <Check className="h-4 w-4 text-green-500 mr-2" />
-                  Uploaded!
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  {label}
-                </>
-              )}
-            </Button>
-
-            <p className="text-xs text-gray-500 text-center">
-              {accept.includes('image') ? 'PNG, JPG, GIF' : accept} • Max {maxSize}MB
-            </p>
-          </div>
-        )}
-
-        {/* Status Messages */}
-        {error && (
-          <div className="flex items-start gap-2 text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg w-full">
-            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Hidden File Input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={accept}
-        onChange={handleFileSelect}
-        className="hidden"
-        disabled={disabled || uploading}
-      />
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full w-full cursor-pointer">
+          {loading ? (
+            <Loader2 className="h-6 w-6 animate-spin" />
+          ) : (
+            <>
+              <Camera className={`${size === 'sm' ? 'h-4 w-4' : 'h-6 w-6'} mb-1`} />
+              <span className={`${size === 'sm' ? 'text-xs' : 'text-sm'} font-medium`}>
+                {size === 'sm' ? 'Add' : 'Add Photo'}
+              </span>
+            </>
+          )}
+        </div>
+      )}
     </div>
-  );
-};
+
+    {/* Upload Controls */}
+    {!disabled && (
+      <div className="flex flex-col items-center gap-2 w-full">
+        <Button
+          type="button"
+          variant="outline"
+          size={size === 'sm' ? 'sm' : 'md'}
+          onClick={handleClick}
+          disabled={loading}
+          className="w-full max-w-[200px]"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Uploading...
+            </>
+          ) : success ? (
+            <>
+              <Check className="h-4 w-4 text-green-500 mr-2" />
+              Uploaded!
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4 mr-2" />
+              {label}
+            </>
+          )}
+        </Button>
+        <p className="text-xs text-gray-500 text-center">
+          {accept.includes('image') ? 'PNG, JPG, GIF' : accept} • Max {maxSize}MB
+        </p>
+      </div>
+    )}
+
+    {/* Status Messages */}
+    {error && (
+      <div className="flex items-start gap-2 text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg w-full">
+        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+        <span>{error}</span>
+      </div>
+    )}
+  </div>
+
+  {/* Hidden File Input */}
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept={accept}
+    onChange={handleFileSelect}
+    className="hidden"
+    disabled={disabled || loading}
+  />
+</div>
 
 export default ImageUpload;

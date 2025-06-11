@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
-import ImageUpload from '../components/common/ImageUpload';
+import { ImageUpload } from '../components/common/ImageUpload';
 import BadgeSystem from '../components/badges/BadgeSystem';
 import EndorsementSystem from '../components/endorsements/EndorsementSystem';
 import GitHubIntegration from '../components/github/GitHubIntegration';
