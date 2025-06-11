@@ -33,6 +33,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   return !user ? <>{children}</> : <Navigate to="/dashboard" />;
 };
+
 const App: React.FC = () => {
   return (
     <ChakraProvider theme={theme}>
@@ -111,7 +112,6 @@ const App: React.FC = () => {
       </AuthProvider>
     </ChakraProvider>
   );
-};
 };
 
 export default App;
