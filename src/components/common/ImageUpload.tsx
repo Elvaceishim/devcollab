@@ -28,7 +28,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   maxSize = 5,
   disabled = false,
   loading, // <-- Add this line
-}) => {
+}: ImageUploadProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage || null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
