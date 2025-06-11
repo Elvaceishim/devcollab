@@ -1,84 +1,81 @@
-import { Box, Container, Heading, Text, VStack, SimpleGrid, Icon, useColorModeValue } from '@chakra-ui/react';
-import { FaCode, FaUsers, FaRocket, FaShieldAlt } from 'react-icons/fa';
+import React from 'react';
+import { Code, Users, Rocket, Shield } from 'lucide-react';
 
-const About = () => {
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
-
+const About: React.FC = () => {
   const features = [
     {
-      icon: FaCode,
+      icon: Code,
       title: 'Developer-First Platform',
       description: 'Built by developers, for developers. Our platform understands the unique needs of software development teams.'
     },
     {
-      icon: FaUsers,
+      icon: Users,
       title: 'Collaborative Workspace',
       description: 'Seamlessly collaborate with your team members in real-time, share code, and manage projects efficiently.'
     },
     {
-      icon: FaRocket,
+      icon: Rocket,
       title: 'Fast & Efficient',
       description: 'Optimized for performance, ensuring your development workflow remains smooth and uninterrupted.'
     },
     {
-      icon: FaShieldAlt,
+      icon: Shield,
       title: 'Secure & Reliable',
       description: 'Enterprise-grade security with end-to-end encryption and regular security audits.'
     }
   ];
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <VStack spacing={8} align="stretch">
-        <Box textAlign="center" mb={10}>
-          <Heading as="h1" size="2xl" mb={4}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             About DevCollab
-          </Heading>
-          <Text fontSize="xl" color={textColor} maxW="3xl" mx="auto">
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             DevCollab is a modern developer workspace platform designed to streamline collaboration
             and enhance productivity for development teams.
-          </Text>
-        </Box>
+          </p>
+        </div>
 
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={8}>
-          {features.map((feature, index) => (
-            <Box
-              key={index}
-              p={6}
-              bg={bgColor}
-              rounded="lg"
-              shadow="md"
-              transition="transform 0.2s"
-              _hover={{ transform: 'translateY(-5px)' }}
-            >
-              <Icon as={feature.icon} w={10} h={10} color="blue.500" mb={4} />
-              <Heading as="h3" size="md" mb={2}>
-                {feature.title}
-              </Heading>
-              <Text color={textColor}>{feature.description}</Text>
-            </Box>
-          ))}
-        </SimpleGrid>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={index}
+                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              >
+                <Icon className="h-10 w-10 text-primary-600 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            );
+          })}
+        </div>
 
-        <Box mt={10}>
-          <Heading as="h2" size="xl" mb={6}>
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">
             Our Mission
-          </Heading>
-          <Text fontSize="lg" color={textColor} mb={4}>
-            At DevCollab, we're on a mission to revolutionize how development teams collaborate.
-            We believe that great software is built through effective collaboration, and we're
-            committed to providing the tools that make this possible.
-          </Text>
-          <Text fontSize="lg" color={textColor}>
-            Our platform combines powerful features with an intuitive interface, making it
-            easier than ever for teams to work together, share knowledge, and deliver
-            exceptional software.
-          </Text>
-        </Box>
-      </VStack>
-    </Container>
+          </h2>
+          <div className="space-y-4 text-lg text-gray-600">
+            <p>
+              At DevCollab, we're on a mission to revolutionize how development teams collaborate.
+              We believe that great software is built through effective collaboration, and we're
+              committed to providing the tools that make this possible.
+            </p>
+            <p>
+              Our platform combines powerful features with an intuitive interface, making it
+              easier than ever for teams to work together, share knowledge, and deliver
+              exceptional software.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default About; 
+export default About;

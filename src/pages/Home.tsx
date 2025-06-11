@@ -1,149 +1,117 @@
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  Button,
-  VStack,
-  HStack,
-  SimpleGrid,
-  Icon,
-  useColorModeValue,
-  Image
-} from '@chakra-ui/react';
-import { FaCode, FaUsers, FaRocket, FaShieldAlt } from 'react-icons/fa';
-import { Link as RouterLink } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Code, Users, Rocket, Shield } from 'lucide-react';
 
-const Home = () => {
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
-
+const Home: React.FC = () => {
   const features = [
     {
-      icon: FaCode,
+      icon: Code,
       title: 'Code Collaboration',
       description: 'Real-time code editing and collaboration with your team members.'
     },
     {
-      icon: FaUsers,
+      icon: Users,
       title: 'Team Management',
       description: 'Organize your team, manage roles, and track progress efficiently.'
     },
     {
-      icon: FaRocket,
+      icon: Rocket,
       title: 'Fast Development',
       description: 'Streamlined workflow for faster development and deployment.'
     },
     {
-      icon: FaShieldAlt,
+      icon: Shield,
       title: 'Secure Platform',
       description: 'Enterprise-grade security with end-to-end encryption.'
     }
   ];
 
   return (
-    <Box>
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <Box bg={useColorModeValue('gray.50', 'gray.900')} py={20}>
-        <Container maxW="container.xl">
-          <VStack spacing={8} align="center" textAlign="center">
-            <Heading
-              as="h1"
-              size="2xl"
-              bgGradient="linear(to-r, blue.400, blue.600)"
-              bgClip="text"
-              fontWeight="extrabold"
-            >
+      <div className="bg-gradient-to-br from-gray-50 to-primary-50 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               Developer Workspace Platform
-            </Heading>
-            <Text fontSize="xl" color={textColor} maxW="2xl">
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Collaborate, code, and create together. DevCollab provides the tools you need
               to build amazing software with your team.
-            </Text>
-            <HStack spacing={4}>
-              <Button
-                as={RouterLink}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
                 to="/register"
-                colorScheme="blue"
-                size="lg"
-                px={8}
+                className="bg-primary-600 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-primary-700 transition-colors"
               >
                 Get Started
-              </Button>
-              <Button
-                as={RouterLink}
+              </Link>
+              <Link
                 to="/about"
-                variant="outline"
-                size="lg"
-                px={8}
+                className="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg text-lg font-medium hover:bg-gray-50 transition-colors"
               >
                 Learn More
-              </Button>
-            </HStack>
-          </VStack>
-        </Container>
-      </Box>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Features Section */}
-      <Container maxW="container.xl" py={20}>
-        <VStack spacing={12}>
-          <Box textAlign="center">
-            <Heading as="h2" size="xl" mb={4}>
+      <div className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Why Choose DevCollab?
-            </Heading>
-            <Text fontSize="lg" color={textColor} maxW="2xl" mx="auto">
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Our platform is designed to make collaboration seamless and efficient
               for development teams of all sizes.
-            </Text>
-          </Box>
+            </p>
+          </div>
 
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={8} w="full">
-            {features.map((feature, index) => (
-              <Box
-                key={index}
-                p={6}
-                bg={bgColor}
-                rounded="lg"
-                shadow="md"
-                transition="transform 0.2s"
-                _hover={{ transform: 'translateY(-5px)' }}
-              >
-                <Icon as={feature.icon} w={10} h={10} color="blue.500" mb={4} />
-                <Heading as="h3" size="md" mb={2}>
-                  {feature.title}
-                </Heading>
-                <Text color={textColor}>{feature.description}</Text>
-              </Box>
-            ))}
-          </SimpleGrid>
-        </VStack>
-      </Container>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                >
+                  <Icon className="h-10 w-10 text-primary-600 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600">{feature.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* CTA Section */}
-      <Box bg={useColorModeValue('blue.50', 'blue.900')} py={20}>
-        <Container maxW="container.xl">
-          <VStack spacing={8} align="center" textAlign="center">
-            <Heading as="h2" size="xl">
+      <div className="bg-primary-50 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Ready to Get Started?
-            </Heading>
-            <Text fontSize="lg" color={textColor} maxW="2xl">
+            </h2>
+            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Join thousands of developers who are already using DevCollab to build
               amazing software together.
-            </Text>
-            <Button
-              as={RouterLink}
+            </p>
+            <Link
               to="/register"
-              colorScheme="blue"
-              size="lg"
-              px={8}
+              className="bg-primary-600 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-primary-700 transition-colors"
             >
               Sign Up Now
-            </Button>
-          </VStack>
-        </Container>
-      </Box>
-    </Box>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default Home; 
+export default Home;

@@ -1,23 +1,13 @@
-import {
-  Box,
-  Button,
-  Stack,
-  useColorModeValue,
-  useDisclosure,
-  IconButton,
-  HStack,
-  useColorMode,
-  Text
-} from '@chakra-ui/react';
-import { Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
-import { HamburgerIcon, CloseIcon, MoonIcon, SunIcon } from '@chakra-ui/icons';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Moon, Sun, Code2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const Navbar = () => {
-  const { isOpen, onToggle } = useDisclosure();
-  const { colorMode, toggleColorMode } = useColorMode();
+const Navbar: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const { user, signOut } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -25,174 +15,183 @@ const Navbar = () => {
     navigate('/');
   };
 
-  return (
-    <Box>
-      <Box
-        bg={useColorModeValue('white', 'gray.800')}
-        color={useColorModeValue('gray.600', 'white')}
-        minH={'60px'}
-        py={{ base: 2 }}
-        px={{ base: 4 }}
-        borderBottom={1}
-        borderStyle={'solid'}
-        borderColor={useColorModeValue('gray.200', 'gray.900')}
-        align={'center'}
-      >
-        <Box
-          ml={{ base: -2 }}
-          display={{ base: 'block', md: 'none' }}
-        >
-          <IconButton
-            onClick={onToggle}
-            variant={'ghost'}
-            aria-label={'Toggle Navigation'}
-          >
-            {isOpen ? <CloseIcon w={3} h={3} /> : <HamburgerIcon w={5} h={5} />}
-          </IconButton>
-        </Box>
-        <div className="flex flex-1 items-center justify-center md:justify-start">
-        <Box className="flex flex-1 items-center justify-center md:justify-start">
-          <Text
-            textAlign={useColorModeValue('left', 'center')}
-            fontFamily={'heading'}
-            color={useColorModeValue('gray.800', 'white')}
-            as={RouterLink}
-            to="/"
-            fontSize="xl"
-            fontWeight="bold"
-          >
-            DevCollab
-          </Text>
+  const toggleColorMode = () => {
+    setIsDark(!isDark);
+    document.documentElement.classList.toggle('dark');
+  };
 
-          <Box display={{ base: 'none', md: 'block' }} ml={10}>
-            <Stack direction={'row'} spacing={4}>
-              <Button
-                as={RouterLink}
-                to="/about"
-                variant={'ghost'}
-                fontSize={'sm'}
-                fontWeight={500}
-              >
-                About
-              </Button>
-              <Button
-                as={RouterLink}
-                to="/faq"
-                variant={'ghost'}
-                fontSize={'sm'}
-                fontWeight={500}
-              >
-                FAQ
-              </Button>
-              <Button
-                as={RouterLink}
-                to="/contact"
-                variant={'ghost'}
-                fontSize={'sm'}
-                fontWeight={500}
-              >
-                Contact
-              </Button>
-            </Stack>
-          </Box>
-        </Box>
-        <Stack
-        <Stack
-          justify={'flex-end'}
-          direction={'row'}
-          spacing={6}
-        >
-            aria-label="Toggle color mode"
-            onClick={toggleColorMode}
-            variant="ghost"
-          >
-            {colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
-          </IconButton>
-          {user ? (
-            <Menu>
-              <MenuButton
-                as={Button}
-                rounded={'full'}
-                variant={'link'}
-                cursor={'pointer'}
-                minW={0}
-              >
-                {user.email}
-              </MenuButton>
-              <MenuList>
-                <MenuItem as={RouterLink} to="/profile">
-                  Profile
-                </MenuItem>
-                <MenuItem value="signout" onClick={handleSignOut}>Sign Out</MenuItem>
-              </MenuList>
-            </Menu>
-          ) : (
-            <HStack spacing={4}>
-              <Button
-                as={RouterLink}
-                to="/login"
-                fontSize={'sm'}
-                fontWeight={400}
-                variant={'link'}
-              >
-                Sign In
-              </Button>
-              <Button
-                as={RouterLink}
-              <Button
-                as={RouterLink}
-                to="/register"
-                display={{ base: 'none', md: 'inline-flex' }}
-                fontSize={'sm'}
-                fontWeight={600}
-                color={'white'}
-                bg={'blue.400'}
-                _hover={{
-                  bg: 'blue.300',
-                }}
-              >
-                Sign Up
-              </Button>
-        </Stack>
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <nav className="bg-white shadow-lg border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center space-x-2">
+              <div className="bg-gradient-to-r from-primary-600 to-secondary-600 p-2 rounded-lg">
+                <Code2 className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+                DevCollab
+              </span>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link
+              to="/about"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/about')
+                  ? 'text-primary-600 bg-primary-50'
+                  : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50'
+              }`}
+            >
+              About
+            </Link>
+            <Link
+              to="/faq"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/faq')
+                  ? 'text-primary-600 bg-primary-50'
+                  : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50'
+              }`}
+            >
+              FAQ
+            </Link>
+            <Link
+              to="/contact"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/contact')
+                  ? 'text-primary-600 bg-primary-50'
+                  : 'text-gray-600 hover:text-primary-600 hover:bg-gray-50'
+              }`}
+            >
+              Contact
+            </Link>
+          </div>
+
+          {/* Right side */}
+          <div className="hidden md:flex items-center space-x-4">
+            <button
+              onClick={toggleColorMode}
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/profile"
+                  className="text-gray-600 hover:text-gray-900 font-medium"
+                >
+                  {user.email}
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/login"
+                  className="text-gray-600 hover:text-gray-900 font-medium"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+        </div>
       </div>
 
-      <Box
-        display={{ base: isOpen ? 'block' : 'none', md: 'none' }}
-        pb={4}
-        px={4}
-      >
-        <Stack as={'nav'} spacing={4}>
-          <Button
-            as={RouterLink}
-            to="/about"
-            variant={'ghost'}
-            fontSize={'sm'}
-            fontWeight={500}
-          >
-            About
-          </Button>
-          <Button
-            as={RouterLink}
-            to="/faq"
-            variant={'ghost'}
-            fontSize={'sm'}
-            fontWeight={500}
-          >
-            FAQ
-          </Button>
-          <Button
-            as={RouterLink}
-            to="/contact"
-            variant={'ghost'}
-            fontSize={'sm'}
-            fontWeight={500}
-          >
-            Contact
-          </Button>
-        </Stack>
-      </Box>
-    </Box>
+      {/* Mobile menu */}
+      {isOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+            <Link
+              to="/about"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              onClick={() => setIsOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              to="/faq"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              onClick={() => setIsOpen(false)}
+            >
+              FAQ
+            </Link>
+            <Link
+              to="/contact"
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              onClick={() => setIsOpen(false)}
+            >
+              Contact
+            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setIsOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-900 hover:bg-red-50"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="block px-3 py-2 rounded-md text-base font-medium bg-primary-600 text-white hover:bg-primary-700"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </nav>
   );
 };
 
-export default Navbar; 
+export default Navbar;

@@ -1,23 +1,7 @@
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  VStack,
-  FormControl,
-  FormLabel,
-  Input,
-  Textarea,
-  Button,
-  useToast,
-  useColorModeValue,
-  SimpleGrid,
-  Icon
-} from '@chakra-ui/react';
-import { FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
-const Contact = () => {
+const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,35 +9,19 @@ const Contact = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const toast = useToast();
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Here you would typically send the form data to your backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
-      
-      toast({
-        title: 'Message sent!',
-        description: "We'll get back to you soon.",
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSubmitted(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: "Something went wrong. Please try again.",
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      console.error('Error submitting form:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -66,118 +34,144 @@ const Contact = () => {
 
   const contactInfo = [
     {
-      icon: FaEnvelope,
+      icon: Mail,
       title: 'Email',
       content: 'support@devcollab.com'
     },
     {
-      icon: FaPhone,
+      icon: Phone,
       title: 'Phone',
       content: '+1 (555) 123-4567'
     },
     {
-      icon: FaMapMarkerAlt,
+      icon: MapPin,
       title: 'Address',
       content: '123 Developer Way, Tech City, TC 12345'
     }
   ];
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <VStack spacing={8} align="stretch">
-        <Box textAlign="center" mb={10}>
-          <Heading as="h1" size="2xl" mb={4}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Contact Us
-          </Heading>
-          <Text fontSize="xl" color={textColor} maxW="3xl" mx="auto">
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-          </Text>
-        </Box>
+          </p>
+        </div>
 
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={8} mb={10}>
-          {contactInfo.map((info, index) => (
-            <Box
-              key={index}
-              p={6}
-              bg={bgColor}
-              rounded="lg"
-              shadow="md"
-              textAlign="center"
-            >
-              <Icon as={info.icon} w={8} h={8} color="blue.500" mb={4} />
-              <Heading as="h3" size="md" mb={2}>
-                {info.title}
-              </Heading>
-              <Text color={textColor}>{info.content}</Text>
-            </Box>
-          ))}
-        </SimpleGrid>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {contactInfo.map((info, index) => {
+            const Icon = info.icon;
+            return (
+              <div
+                key={index}
+                className="bg-white p-6 rounded-lg shadow-md text-center"
+              >
+                <Icon className="h-8 w-8 text-primary-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {info.title}
+                </h3>
+                <p className="text-gray-600">{info.content}</p>
+              </div>
+            );
+          })}
+        </div>
 
-        <Box
-          as="form"
-          onSubmit={handleSubmit}
-          p={8}
-          bg={bgColor}
-          rounded="lg"
-          shadow="md"
-        >
-          <VStack spacing={4}>
-            <FormControl isRequired>
-              <FormLabel>Name</FormLabel>
-              <Input
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Your name"
-              />
-            </FormControl>
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-2xl mx-auto">
+          {submitted ? (
+            <div className="text-center">
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                Message sent successfully! We'll get back to you soon.
+              </div>
+              <button
+                onClick={() => setSubmitted(false)}
+                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                Send Another Message
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Your name"
+                />
+              </div>
 
-            <FormControl isRequired>
-              <FormLabel>Email</FormLabel>
-              <Input
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="your.email@example.com"
-              />
-            </FormControl>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="your.email@example.com"
+                />
+              </div>
 
-            <FormControl isRequired>
-              <FormLabel>Subject</FormLabel>
-              <Input
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                placeholder="What's this about?"
-              />
-            </FormControl>
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="What's this about?"
+                />
+              </div>
 
-            <FormControl isRequired>
-              <FormLabel>Message</FormLabel>
-              <Textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                placeholder="Your message..."
-                rows={6}
-              />
-            </FormControl>
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  rows={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Your message..."
+                />
+              </div>
 
-            <Button
-              type="submit"
-              colorScheme="blue"
-              size="lg"
-              width="full"
-              isLoading={isSubmitting}
-            >
-              Send Message
-            </Button>
-          </VStack>
-        </Box>
-      </VStack>
-    </Container>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Message'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default Contact; 
+export default Contact;

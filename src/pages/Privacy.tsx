@@ -1,15 +1,6 @@
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  VStack,
-  useColorModeValue
-} from '@chakra-ui/react';
+import React from 'react';
 
-const Privacy = () => {
-  const textColor = useColorModeValue('gray.600', 'gray.300');
-
+const Privacy: React.FC = () => {
   const sections = [
     {
       title: 'Information We Collect',
@@ -77,34 +68,32 @@ const Privacy = () => {
   ];
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <VStack spacing={8} align="stretch">
-        <Box textAlign="center" mb={10}>
-          <Heading as="h1" size="2xl" mb={4}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Privacy Policy
-          </Heading>
-          <Text fontSize="xl" color={textColor} maxW="3xl" mx="auto">
+          </h1>
+          <p className="text-xl text-gray-600">
             Last Updated: {new Date().toLocaleDateString()}
-          </Text>
-        </Box>
+          </p>
+        </div>
 
-        {sections.map((section, index) => (
-          <Box key={index} mb={8}>
-            <Heading as="h2" size="xl" mb={4}>
-              {section.title}
-            </Heading>
-            <Text
-              color={textColor}
-              fontSize="lg"
-              whiteSpace="pre-line"
-            >
-              {section.content}
-            </Text>
-          </Box>
-        ))}
-      </VStack>
-    </Container>
+        <div className="bg-white rounded-lg shadow-md p-8 space-y-8">
+          {sections.map((section, index) => (
+            <div key={index}>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                {section.title}
+              </h2>
+              <div className="text-gray-600 whitespace-pre-line">
+                {section.content}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default Privacy; 
+export default Privacy;

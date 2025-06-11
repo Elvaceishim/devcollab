@@ -1,19 +1,8 @@
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
-  useColorModeValue
-} from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
-const FAQ = () => {
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
+const FAQ: React.FC = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [
     {
@@ -42,43 +31,49 @@ const FAQ = () => {
     }
   ];
 
-  return (
-    <Container maxW="container.xl" py={10}>
-      <Box textAlign="center" mb={10}>
-        <Heading as="h1" size="2xl" mb={4}>
-          Frequently Asked Questions
-        </Heading>
-        <Text fontSize="xl" color={textColor} maxW="3xl" mx="auto">
-          Find answers to common questions about DevCollab
-        </Text>
-      </Box>
+  const toggleFAQ = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
 
-      <Accordion allowMultiple>
-        {faqs.map((faq, index) => (
-          <AccordionItem key={index} border="none" mb={4}>
-            <Box
-              bg={bgColor}
-              rounded="lg"
-              shadow="md"
-              p={4}
-            >
-              <AccordionButton>
-                <Box flex="1" textAlign="left">
-                  <Heading as="h3" size="md">
-                    {faq.question}
-                  </Heading>
-                </Box>
-                <AccordionIcon />
-              </AccordionButton>
-              <AccordionPanel pb={4}>
-                <Text color={textColor}>{faq.answer}</Text>
-              </AccordionPanel>
-            </Box>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </Container>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Find answers to common questions about DevCollab
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <button
+                onClick={() => toggleFAQ(index)}
+                className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+              >
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {faq.question}
+                </h3>
+                {openIndex === index ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+              {openIndex === index && (
+                <div className="px-6 pb-4">
+                  <p className="text-gray-600">{faq.answer}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default FAQ; 
+export default FAQ;
