@@ -127,8 +127,8 @@ const DeveloperConnections: React.FC = () => {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                  {developer.avatar ? (
-                    <img src={developer.avatar} alt={developer.name} className="w-12 h-12 rounded-full" />
+                  {developer.avatars? (
+                    <img src={developer.avatars} alt={developer.name} className="w-12 h-12 rounded-full" />
                   ) : (
                     <span className="text-lg font-bold text-primary-600">
                       {developer.name.charAt(0).toUpperCase()}

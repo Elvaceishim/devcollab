@@ -8,6 +8,11 @@ import Card from '../components/common/Card';
 import ImageUpload from '../components/common/ImageUpload';
 import { useImageUpload } from '../hooks/useImageUpload';
 import { supabase, deleteImage } from '@/lib/supabase';
+import type { User } from '@supabase/auth-js';
+
+export type UserWithQuizResults = User & {
+  quizResults?: { score: number; date: string }[];
+};
 
 interface FormData {
   name: string;
@@ -20,7 +25,7 @@ interface FormData {
   portfolio: string;
   hourlyRate: string;
   availability: 'Available' | 'Busy' | 'Not Available';
-  avatar: string;
+  avatars: string; // use avatars
 }
 
 const Profile: React.FC = () => {
@@ -44,7 +49,7 @@ const Profile: React.FC = () => {
     portfolio: '',
     hourlyRate: '',
     availability: 'Available',
-    avatar: ''
+    avatars: '' // use avatars
   });
 
   // Load profile
@@ -68,7 +73,7 @@ const Profile: React.FC = () => {
           portfolio: profile.portfolio || '',
           hourlyRate: (profile.hourly_rate || 0).toString(),
           availability: profile.availability,
-          avatar: profile.avatar_url || ''
+          avatars: profile.avatars || profile.avatar_url || '' // use avatars
         });
       }
     }
@@ -97,7 +102,7 @@ const Profile: React.FC = () => {
         portfolio: formData.portfolio,
         hourly_rate: parseFloat(formData.hourlyRate) || 0,
         availability: formData.availability,
-        avatar_url: formData.avatar
+        avatars: formData.avatars // use avatars
       };
       await updateProfile(payload);
       setIsEditing(false);
@@ -117,21 +122,28 @@ const Profile: React.FC = () => {
       if (!publicUrl) throw new Error('Failed to upload avatar');
 
       // Delete old avatar if exists
-      if (formData.avatar) {
-        const oldKey = formData.avatar.split('/').pop();
+      if (formData.avatars) {
+        const oldKey = formData.avatars.split('/').pop();
         if (oldKey) {
           await deleteImage(oldKey, 'avatars');
         }
       }
 
-      await updateProfile({ avatar_url: publicUrl });
+      await updateProfile({ avatars: publicUrl });
 
-      setFormData(f => ({ ...f, avatar: publicUrl }));
+      setFormData(f => ({ ...f, avatars: publicUrl }));
     } catch (e: any) {
       setError(e.message || 'Failed to upload avatar');
     } finally {
       setIsUploading(false);
     }
+  };
+
+  // Adapter for ImageUpload's onImageUpload prop
+  const handleImageUpload = async (file: File) => {
+    await handleAvatarChange(file);
+    // After upload, return the new public URL
+    return formData.avatars || null;
   };
 
   if (!user) return <div>Loading...</div>;
@@ -185,8 +197,9 @@ const Profile: React.FC = () => {
         {/* Left */}
         <Card className="p-4 text-center">
           <ImageUpload
-            currentImage={formData.avatar}
+            currentImage={formData.avatars}
             onImageChange={handleAvatarChange}
+            onImageUpload={handleImageUpload} // Use the adapter function
             loading={isUploading}
             label="Avatar"
             accept="image/*"

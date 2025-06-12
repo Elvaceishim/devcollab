@@ -76,8 +76,8 @@ const Header: React.FC = () => {
             >
               <div className="relative">
                 <div className="h-8 w-8 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm">
-                  {'avatar' in user && user.avatar ? (
-                    <img src={typeof user.avatar === 'string' ? user.avatar : ''} alt={user.email} className="h-8 w-8 rounded-full" />
+                  {'avatars' in user && user.avatars ? (
+                    <img src={typeof user.avatars === 'string' ? user.avatars: ''} alt={user.email} className="h-8 w-8 rounded-full" />
                   ) : (
                     <UserIcon className="h-4 w-4 text-primary-600" />
                   )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Check, MessageSquare, Calendar, MapPin, Star } from 'lucide-react';
+import { X, User, Check, MessageSquare, MapPin, Star } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { Project, User as UserType } from '../../types';
 import Button from '../common/Button';
@@ -95,8 +95,8 @@ const ApplicationsModal: React.FC<ApplicationsModalProps> = ({ project, onClose 
                     >
                       <div className="flex items-start space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-full flex items-center justify-center shadow-sm">
-                          {applicant.avatar ? (
-                            <img src={applicant.avatar} alt={applicant.name} className="w-10 h-10 rounded-full" />
+                          {applicant.avatars? (
+                            <img src={applicant.avatars} alt={applicant.name} className="w-10 h-10 rounded-full" />
                           ) : (
                             <User className="h-5 w-5 text-primary-600" />
                           )}
@@ -133,8 +133,8 @@ const ApplicationsModal: React.FC<ApplicationsModalProps> = ({ project, onClose 
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-start space-x-4">
                     <div className="w-16 h-16 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-full flex items-center justify-center shadow-lg">
-                      {selectedApplicant.avatar ? (
-                        <img src={selectedApplicant.avatar} alt={selectedApplicant.name} className="w-16 h-16 rounded-full" />
+                      {selectedApplicant.avatars ? (
+                        <img src={selectedApplicant.avatars} alt={selectedApplicant.name} className="w-16 h-16 rounded-full" />
                       ) : (
                         <User className="h-8 w-8 text-primary-600" />
                       )}

@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  avatar?: string;
+  avatars?: string;
   bio: string;
   location: string;
   skills: string[];

@@ -10,6 +10,7 @@ export interface AuthContextType {
   signOut(): Promise<void>;
   updateProfile(profileData: any): Promise<void>;
   syncGitHubRepos?(): Promise<void>;
+  logout: () => void; // Add this line
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,6 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const logout = () => {
+    signOut();
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -70,7 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     updateProfile,
-    // syncGitHubRepos NOW optional prop if implemented
+    logout,
+    // syncGitHubRepos, // include if implemented
   };
 
   return (

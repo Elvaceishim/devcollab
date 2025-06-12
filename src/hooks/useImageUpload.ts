@@ -2,11 +2,16 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import type { Factor, User, UserAppMetadata, UserIdentity, UserMetadata } from '@supabase/auth-js'; // or '@supabase/supabase-js'
+
+export type UserWithAvatar = User & {
+  avatars?: string;
+};
 
 export const useImageUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: UserWithAvatar | null };
 
   const uploadAvatar = async (file: File) => {
   if (!user) {
@@ -57,8 +62,8 @@ export const useImageUpload = () => {
     }
 
     // Delete the old avatar if it exists
-    if (user.avatar) {
-      const oldPath = user.avatar.split('/').pop(); // just the file name
+    if (user.avatars) {
+      const oldPath = user.avatars.split('/').pop(); // just the file name
       if (oldPath) {
         await supabase.storage.from('avatars').remove([oldPath]);
       }
@@ -67,17 +72,20 @@ export const useImageUpload = () => {
     // Update the user's profile in the database
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ avatar: publicUrl })
+      .update({ avatars: publicUrl })
       .eq('id', user.id);
 
     if (updateError) {
+      console.error("Supabase update error:", updateError);
+      console.log("User ID:", user.id);
+      console.log("Public URL being set:", publicUrl);
       throw updateError;
     }
 
     // Update the local user state
     await updateProfile({
       ...user,
-      avatar: publicUrl
+      avatars: publicUrl
     });
 
     return publicUrl;
@@ -119,3 +127,7 @@ export const useImageUpload = () => {
     clearError: () => setError(null)
   };
 };
+
+function updateProfile(_arg0: { avatars: string; id: string; app_metadata: UserAppMetadata; user_metadata: UserMetadata; aud: string; confirmation_sent_at?: string; recovery_sent_at?: string; email_change_sent_at?: string; new_email?: string; new_phone?: string; invited_at?: string; action_link?: string; email?: string; phone?: string; created_at: string; confirmed_at?: string; email_confirmed_at?: string; phone_confirmed_at?: string; last_sign_in_at?: string; role?: string; updated_at?: string; identities?: UserIdentity[]; is_anonymous?: boolean; is_sso_user?: boolean; factors?: Factor[]; deleted_at?: string; }) {
+  throw new Error('Function not implemented.');
+}
