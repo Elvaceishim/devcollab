@@ -1,10 +1,11 @@
+// Profile.tsx
 import React, { useState, useEffect } from 'react';
 import { Edit3, Save, X, MapPin, FolderSync as Sync } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
-import ImageUpload from '../components/common/ImageUpload'; // ensure default export
+import ImageUpload from '../components/common/ImageUpload';
 import { useImageUpload } from '../hooks/useImageUpload';
 import { supabase, deleteImage } from '@/lib/supabase';
 
@@ -46,9 +47,7 @@ const Profile: React.FC = () => {
     avatar: ''
   });
 
-  // Removed stray input and textarea lines that caused errors
-
-  // Fetch profile from Supabase user_metadata
+  // Load profile
   useEffect(() => {
     async function load() {
       if (!user) return;
@@ -63,12 +62,12 @@ const Profile: React.FC = () => {
           bio: profile.bio,
           location: profile.location,
           skills: (profile.skills || []).join(', '),
-          experience: profile.experience as any,
+          experience: profile.experience,
           github: profile.github || '',
           linkedin: profile.linkedin || '',
           portfolio: profile.portfolio || '',
           hourlyRate: (profile.hourly_rate || 0).toString(),
-          availability: profile.availability as any,
+          availability: profile.availability,
           avatar: profile.avatar_url || ''
         });
       }
@@ -108,7 +107,7 @@ const Profile: React.FC = () => {
       setIsSaving(false);
     }
   };
-  
+
   const handleAvatarChange = async (file: File | null) => {
     if (!file || !user) return;
     setIsUploading(true);
@@ -190,9 +189,8 @@ const Profile: React.FC = () => {
             onImageChange={handleAvatarChange}
             loading={isUploading}
             label="Avatar"
-            accept="image/*" onImageUpload={function (): Promise<string | null> {
-              throw new Error('Function not implemented.');
-            } }          />
+            accept="image/*"
+          />
           {isEditing ? (
             <Input
               name="name"
@@ -236,7 +234,6 @@ const Profile: React.FC = () => {
           <Card className="p-4">
             <h3 className="font-semibold mb-2">Professional Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Experience */}
               <div>
                 <label>Experience</label>
                 {isEditing ? (
@@ -246,8 +243,8 @@ const Profile: React.FC = () => {
                     onChange={handleChange}
                     className="w-full border rounded p-2"
                   >
-                    {['Junior','Mid-level','Senior','Lead'].map(l => (
-                      <option key={l} value={l}>{l}</option>
+                    {['Junior', 'Mid-level', 'Senior', 'Lead'].map(level => (
+                      <option key={level} value={level}>{level}</option>
                     ))}
                   </select>
                 ) : (
@@ -255,7 +252,6 @@ const Profile: React.FC = () => {
                 )}
               </div>
 
-              {/* Availability */}
               <div>
                 <label>Availability</label>
                 {isEditing ? (
@@ -265,8 +261,8 @@ const Profile: React.FC = () => {
                     onChange={handleChange}
                     className="w-full border rounded p-2"
                   >
-                    {['Available','Busy','Not Available'].map(a => (
-                      <option key={a} value={a}>{a}</option>
+                    {['Available', 'Busy', 'Not Available'].map(status => (
+                      <option key={status} value={status}>{status}</option>
                     ))}
                   </select>
                 ) : (
@@ -274,7 +270,6 @@ const Profile: React.FC = () => {
                 )}
               </div>
 
-              {/* Location */}
               <div>
                 <label>Location</label>
                 {isEditing ? (
@@ -289,7 +284,6 @@ const Profile: React.FC = () => {
                 )}
               </div>
 
-              {/* Hourly Rate */}
               <div>
                 <label>Hourly Rate</label>
                 {isEditing ? (
@@ -305,7 +299,6 @@ const Profile: React.FC = () => {
                 )}
               </div>
 
-              {/* Skills (only editing) */}
               {isEditing && (
                 <div className="md:col-span-2">
                   <label>Skills</label>
@@ -374,4 +367,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-
