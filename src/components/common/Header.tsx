@@ -1,12 +1,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Code2, User, LogOut, MessageSquare, FolderOpen, Users } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { Code2, User as UserIcon, LogOut, MessageSquare, FolderOpen, Users } from 'lucide-react';
+import { useAuth, AuthContextType } from '../../contexts/AuthContext';
+import type { User } from '@supabase/auth-js';
+
 
 const Header: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth() as AuthContextType;
   const location = useLocation();
-
+  // const { toggle } = useContext(ThemeContext);
   const isActive = (path: string) => location.pathname === path;
 
   if (!user) return null;
@@ -74,14 +76,14 @@ const Header: React.FC = () => {
             >
               <div className="relative">
                 <div className="h-8 w-8 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full" />
+                  {'avatar' in user && user.avatar ? (
+                    <img src={typeof user.avatar === 'string' ? user.avatar : ''} alt={user.email} className="h-8 w-8 rounded-full" />
                   ) : (
-                    <User className="h-4 w-4 text-primary-600" />
+                    <UserIcon className="h-4 w-4 text-primary-600" />
                   )}
                 </div>
               </div>
-              <span className="hidden sm:block font-medium">{user.name}</span>
+              <span className="hidden sm:block font-medium">{user.email}</span>
             </Link>
             <button
               onClick={logout}
@@ -98,3 +100,26 @@ const Header: React.FC = () => {
 };
 
 export default Header;
+// Define UserType according to your user object structure
+// (Removed duplicate UserType and AuthContextType definitions, use the ones from '../../contexts/AuthContext')
+
+export const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = React.useState<User | null>(null);
+
+  // ...other logic
+
+  const logout = () => {
+    // Your logout logic here
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+// Use the User type from @supabase/auth-js instead of redefining it// Add other user fields as needed
+};

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Clock, Users, DollarSign, Sparkles, UserCheck, Bell, Target } from 'lucide-react';
+import { Plus, Search, Clock, Users, DollarSign, Sparkles, UserCheck, Bell, Target } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SearchFilters } from '../types';
@@ -14,7 +14,7 @@ import MatchmakingQuiz from '../components/quiz/MatchmakingQuiz';
 import { Project } from '../types';
 
 const Dashboard: React.FC = () => {
-  const { projects, applyToProject } = useData();
+  const { projects } = useData();
   const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -334,6 +334,12 @@ const Dashboard: React.FC = () => {
             </Card>
           ))}
         </div>
+
+        <div className="search-container">
+          <input type="text" className="search-input" placeholder="Search…" />
+          <button className="search-btn">🔍</button>
+        </div>
+
 
         {filteredProjects.length === 0 && (
           <div className="text-center py-16">

@@ -21,6 +21,17 @@ export interface User {
   profile?: Profile;
 }
 
+// Define the Profile interface
+export interface Profile {
+  summary?: string;
+  website?: string;
+  interests?: string[];
+  // Add more fields as needed
+}
+
+// (Removed invalid JSX and React code from types file)
+
+
 export interface Badge {
   id: string;
   name: string;

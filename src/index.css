@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* @tailwind directives removed because Tailwind CSS is not being processed */
 
 @layer base {
   :root {
@@ -42,7 +40,6 @@
     --color-accent-800: 6 95 70;
     --color-accent-900: 6 78 59;
     --color-accent-950: 2 44 34;
-  }
 
   body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -217,16 +214,11 @@
     transition-duration: 200ms;
   }
   
-  .btn-primary {
-    background: linear-gradient(135deg, rgb(var(--color-primary-600)), rgb(var(--color-secondary-600)));
-    color: white;
-    transition-property: background-color;
-    transition-duration: 200ms;
-  }
-  .btn-primary:hover {
-    background: linear-gradient(135deg, rgb(var(--color-primary-700)), rgb(var(--color-secondary-700)));
-    transform: translateY(-1px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  
+.btn-primary { background: #007bff; color: #fff; }
+
+.btn-primary:hover { background: #0056b3; }
+
   }
   
   .btn-secondary {
@@ -340,4 +332,28 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #5a67d8, #6b46c1);
+}
+
+.dark-mode { 
+  background: #121212; color: #f0f0f0; 
+}
+
+.light-mode { 
+  background: #fff; color: #000; 
+}
+
+.search-container { 
+  display: flex; align-items: center; 
+}
+
+.search-input { 
+  flex: 1; margin-right: 8px; 
+}
+
+.search-btn { 
+  padding: 8px 12px; 
+}
+
+.btn-github { 
+  background: #24292e; color: white;
 }

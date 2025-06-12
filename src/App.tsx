@@ -20,6 +20,12 @@ import Privacy from './pages/Privacy';
 import Layout from './components/Layout';
 import Projects from './pages/Projects';
 import Chats from './pages/Chats';
+import ThemeContext from './types/ThemeContext';
+
+const { dark } = useContext(ThemeContext);
+<div className={dark ? 'dark-mode' : 'light-mode'}>
+  {/* rest */}
+</div>
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -109,3 +115,7 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+function useContext(_ThemeContext: React.Context<{ dark: boolean; toggle: () => void; }>): { dark: any; } {
+  throw new Error('Function not implemented.');
+}

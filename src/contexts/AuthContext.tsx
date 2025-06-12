@@ -1,17 +1,18 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: SupabaseUser | null;
   session: Session | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  updateProfile: (profileData: any) => Promise<void>;
+  signIn(email: string, password: string): Promise<void>;
+  signUp(email: string, password: string): Promise<void>;
+  signOut(): Promise<void>;
+  updateProfile(profileData: any): Promise<void>;
+  syncGitHubRepos?(): Promise<void>;
 }
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -19,17 +20,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
       setLoading(false);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
       setLoading(false);
     });
 
@@ -52,34 +51,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (profileData: any) => {
-    try {
-      const { data: updatedUser, error } = await supabase
-        .from('profiles')
-        .update({
-          name: profileData.name,
-          bio: profileData.bio,
-          skills: profileData.skills,
-          experience: profileData.experience,
-        })
-        .eq('id', user?.id)
-        .select()
-        .single();
+    if (!user) throw new Error('No logged-in user');
+    const { error } = await supabase
+      .from('profiles')
+      .update(profileData)
+      .eq('id', user.id);
 
-      if (error) throw error;
-      return updatedUser;
-    } catch (error) {
+    if (error) {
       console.error('Profile update error:', error);
       throw error;
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     signIn,
     signUp,
     signOut,
     updateProfile,
+    // syncGitHubRepos NOW optional prop if implemented
   };
 
   return (
@@ -90,9 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export function useAuth() {
-  const context = React.useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = React.useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
+  return ctx;
 }

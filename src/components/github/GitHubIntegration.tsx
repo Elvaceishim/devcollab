@@ -4,8 +4,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import Button from '../common/Button';
 import Card from '../common/Card';
 
+// Example User type definition
+// (Removed duplicate User type definition)
+
 const GitHubIntegration: React.FC = () => {
   const { user, syncGitHubRepos, updateProfile } = useAuth();
+  const typedUser = user as User | undefined;
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
@@ -14,8 +18,6 @@ const GitHubIntegration: React.FC = () => {
     
     // Simulate OAuth flow
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mock GitHub username prompt
     const githubUsername = prompt('Enter your GitHub username:');
     if (githubUsername) {
       if (updateProfile) await updateProfile({ github: githubUsername });
@@ -23,76 +25,76 @@ const GitHubIntegration: React.FC = () => {
     }
     
     setConnecting(false);
-  };
+  }
 
   const handleSyncRepos = async () => {
     setSyncing(true);
     if (syncGitHubRepos) await syncGitHubRepos();
     setSyncing(false);
   };
-
-  const isConnected = user?.github;
+  const isConnected = typedUser?.github;
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-gray-900 rounded-lg">
-            <Github className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">GitHub Integration</h3>
-            <p className="text-sm text-gray-600">
-              {isConnected ? 'Connected to GitHub' : 'Connect your GitHub account'}
-            </p>
-          </div>
+      <div className="flex items-center justify-between mb-6"></div>
+      <div className="flex items-center space-x-3">
+        <div className="p-2 bg-gray-900 rounded-lg">
+          <Github className="h-6 w-6 text-white" />
         </div>
-        
-        {isConnected ? (
-          <Button
-            onClick={handleSyncRepos}
-            loading={syncing}
-            variant="outline"
-            size="sm"
-          >
-            {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-            Sync Repos
-          </Button>
-        ) : (
-          <Button
-            onClick={handleConnectGitHub}
-            loading={connecting}
-            className="bg-gray-900 hover:bg-gray-800"
-          >
-            {connecting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Github className="h-4 w-4 mr-2" />}
-            Connect GitHub
-          </Button>
-        )}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">GitHub Integration</h3>
+          <p className="text-sm text-gray-600">
+            {isConnected ? 'Connected to GitHub' : 'Connect your GitHub account'}
+          </p>
+        </div>
       </div>
+      
+      {isConnected ? (
+        <Button
+          onClick={handleSyncRepos}
+          loading={syncing}
+          variant="outline"
+          size="sm"
+        >
+          {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+          Sync Repos
+        </Button>
+      ) : (
+        <Button
+          onClick={handleConnectGitHub}
+          loading={connecting}
+          className="bg-gray-900 hover:bg-gray-800"
+        >
+          {connecting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Github className="h-4 w-4 mr-2" />}
+          Connect GitHub
+        </Button>
+      )}
+
+      {/* Remove duplicate  anchor button if not needed */}
+      {/* <a href="https://github.com/login/oauth/authorize?client_id=YOUR_ID"
+        className="btn btn-github"></a> */}
 
       {isConnected ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm font-medium text-green-800">
-                Connected as @{user.github}
+              <span>
+                Connected as @{typedUser?.github}
               </span>
+              <a
+                href={`https://github.com/${typedUser?.github}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-600 hover:text-green-700"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
             </div>
-            <a
-              href={`https://github.com/${user.github}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-green-600 hover:text-green-700"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
           </div>
-
-          {user.githubRepos && user.githubRepos.length > 0 ? (
+          {typedUser?.githubRepos && typedUser.githubRepos.length > 0 ? 
             <div className="space-y-3">
               <h4 className="font-medium text-gray-900">Recent Repositories</h4>
-              {user.githubRepos.map((repo: any) => (
+              {typedUser.githubRepos.map((repo: any) => (
                 <div key={repo.id} className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -131,7 +133,7 @@ const GitHubIntegration: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : (
+          : (
             <div className="text-center py-6 text-gray-500">
               <Github className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No repositories synced yet</p>
@@ -145,8 +147,8 @@ const GitHubIntegration: React.FC = () => {
                 Sync Now
               </Button>
             </div>
-          )}
-        </div>
+          )
+}</div>
       ) : (
         <div className="text-center py-8">
           <Github className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -167,3 +169,21 @@ const GitHubIntegration: React.FC = () => {
 };
 
 export default GitHubIntegration;
+
+// Example User type definition
+export type User = {
+  id: string;
+  email: string;
+  github?: string;
+  githubRepos?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    url: string;
+    language?: string;
+    stars?: number;
+    forks?: number;
+    lastUpdated: string;
+  }>;
+  // ...other properties
+};
