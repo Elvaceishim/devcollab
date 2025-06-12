@@ -1,52 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Save, X, Github, Linkedin, Globe, MapPin, FolderSync as Sync } from 'lucide-react';
+import { Edit3, Save, X, MapPin, FolderSync as Sync } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Card from '../components/common/Card';
-import { ImageUpload } from '../components/common/ImageUpload';
-import BadgeSystem from '../components/badges/BadgeSystem';
-import EndorsementSystem from '../components/endorsements/EndorsementSystem';
-import GitHubIntegration from '../components/github/GitHubIntegration';
+import ImageUpload from '../components/common/ImageUpload'; // ensure default export
 import { useImageUpload } from '../hooks/useImageUpload';
-import { User } from '../types';
-import { supabase, AVATAR_BUCKET, uploadImage, deleteImage } from '@/lib/supabase';
-
-const getUserData = (user: any): User | null => {
-  if (!user) return null;
-
-  const now = new Date().toISOString();
-  const userData: User = {
-    id: user.id || '',
-    email: user.email || '',
-    name: user.user_metadata?.name || user.user_metadata?.full_name || 'Anonymous User',
-    bio: user.user_metadata?.bio || 'No bio provided yet.',
-    location: user.user_metadata?.location || 'Not specified',
-    skills: user.user_metadata?.skills || [],
-    experience: user.user_metadata?.experience || 'Junior',
-    github: user.user_metadata?.github || '',
-    linkedin: user.user_metadata?.linkedin || '',
-    portfolio: user.user_metadata?.portfolio || '',
-    hourlyRate: user.user_metadata?.hourlyRate || user.user_metadata?.hourly_rate,
-    availability: user.user_metadata?.availability || 'Available',
-    avatar: user.user_metadata?.avatar || '',
-    joinedAt: user.user_metadata?.joinedAt || now,
-    badges: user.user_metadata?.badges || [],
-    endorsements: user.user_metadata?.endorsements || [],
-    githubRepos: user.user_metadata?.githubRepos || [],
-    quizResults: user.user_metadata?.quizResults || [],
-    preferences: user.user_metadata?.preferences || {
-      projectTypes: [],
-      timeCommitment: 'flexible',
-      remoteWork: true,
-      teamSize: 'small',
-      communicationStyle: 'casual'
-    },
-    profile: user.user_metadata?.profile
-  };
-
-  return userData;
-};
+import { supabase, deleteImage } from '@/lib/supabase';
 
 interface FormData {
   name: string;
@@ -64,13 +24,14 @@ interface FormData {
 
 const Profile: React.FC = () => {
   const { user, updateProfile, syncGitHubRepos } = useAuth();
-  const { uploadAvatar } = useImageUpload();
+  const { uploadAvatar: uploadToStorage } = useImageUpload();
+
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Initialize form data with better defaults and null checks
+
   const [formData, setFormData] = useState<FormData>({
     name: '',
     bio: '',
@@ -85,443 +46,274 @@ const Profile: React.FC = () => {
     avatar: ''
   });
 
-  // Get user data with proper null handling
-  const userData = getUserData(user);
+  // Removed stray input and textarea lines that caused errors
 
-  // Update form data when user data changes
+  // Fetch profile from Supabase user_metadata
   useEffect(() => {
-    if (userData) {
-      setFormData({
-        name: userData.name,
-        bio: userData.bio,
-        location: userData.location,
-        skills: userData.skills.join(', '),
-        experience: userData.experience,
-        github: userData.github || '',
-        linkedin: userData.linkedin || '',
-        portfolio: userData.portfolio || '',
-        hourlyRate: userData.hourlyRate?.toString() || '',
-        availability: userData.availability,
-        avatar: userData.avatar || ''
-      });
+    async function load() {
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (profile) {
+        setFormData({
+          name: profile.name,
+          bio: profile.bio,
+          location: profile.location,
+          skills: (profile.skills || []).join(', '),
+          experience: profile.experience as any,
+          github: profile.github || '',
+          linkedin: profile.linkedin || '',
+          portfolio: profile.portfolio || '',
+          hourlyRate: (profile.hourly_rate || 0).toString(),
+          availability: profile.availability as any,
+          avatar: profile.avatar_url || ''
+        });
+      }
     }
-  }, [userData]);
+    load();
+  }, [user]);
 
-  if (!userData) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-center items-center min-h-64">
-          <div className="text-gray-500">Loading profile...</div>
-        </div>
-      </div>
-    );
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleChange = (e: React.ChangeEvent<any>) => {
+    setFormData(f => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-const [, setIsSaving] = useState(false); // Add this state
-
-const handleSave = async () => {
-  setIsSaving(true);
-  setError(null);
-
-  try {
-    const profileData = {
-      name: formData.name,
-      bio: formData.bio,
-      location: formData.location,
-      skills: formData.skills.split(',').map(s => s.trim()),
-      experience: formData.experience,
-      github: formData.github,
-      linkedin: formData.linkedin,
-      portfolio: formData.portfolio,
-      hourly_rate: parseFloat(formData.hourlyRate) || 0,
-      availability: formData.availability,
-      avatar: formData.avatar
-    };
-
-    // Validate
-    if (!profileData.name.trim()) {
-      throw new Error('Name is required');
-    }
-
-    await updateProfile(profileData);
-    setIsEditing(false);
-
-  } catch (error) {
-    setError(error instanceof Error ? error.message : 'Update failed');
-  } finally {
-    setIsSaving(false);
-  }
-};
-
-  const handleCancel = () => {
-    if (userData) {
-      setFormData({
-        name: userData.name,
-        bio: userData.bio,
-        location: userData.location,
-        skills: userData.skills.join(', '),
-        experience: userData.experience,
-        github: userData.github || '',
-        linkedin: userData.linkedin || '',
-        portfolio: userData.portfolio || '',
-        hourlyRate: userData.hourlyRate?.toString() || '',
-        availability: userData.availability,
-        avatar: userData.avatar || ''
-      });
-    }
-    setIsEditing(false);
+  const handleSave = async () => {
+    setIsSaving(true);
     setError(null);
-  };
-
-  const handleSyncGitHub = async () => {
-    if (!syncGitHubRepos) {
-      setError('GitHub sync is not available');
-      return;
-    }
-    
-    setSyncing(true);
-    setError(null);
-    
     try {
-      await syncGitHubRepos();
-    } catch (error) {
-      console.error('Error syncing GitHub repos:', error);
-      setError('Failed to sync GitHub repos. Please try again.');
+      const payload = {
+        name: formData.name,
+        bio: formData.bio,
+        location: formData.location,
+        skills: formData.skills
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean),
+        experience: formData.experience,
+        github: formData.github,
+        linkedin: formData.linkedin,
+        portfolio: formData.portfolio,
+        hourly_rate: parseFloat(formData.hourlyRate) || 0,
+        availability: formData.availability,
+        avatar_url: formData.avatar
+      };
+      await updateProfile(payload);
+      setIsEditing(false);
+    } catch (e: any) {
+      setError(e.message || 'Failed to update profile');
     } finally {
-      setSyncing(false);
+      setIsSaving(false);
     }
   };
-
+  
   const handleAvatarChange = async (file: File | null) => {
     if (!file || !user) return;
-
-    if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file (JPEG, PNG, etc.)');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      setError('File size must be less than 5MB');
-      return;
-    }
-
-  setIsUploading(true);
-  setError(null);
-
+    setIsUploading(true);
+    setError(null);
     try {
-      setError(null);
+      const publicUrl = await uploadToStorage(file);
+      if (!publicUrl) throw new Error('Failed to upload avatar');
 
-      const { publicUrl } = await uploadImage(file, AVATAR_BUCKET);
-
-      const { error } = await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', user.id);
-
-      if (error) throw error;
-
-      setFormData(prev => ({ ...prev, avatar: publicUrl }));
-    
+      // Delete old avatar if exists
       if (formData.avatar) {
-        const oldPath = formData.avatar.split('/').pop();
-        await deleteImage(AVATAR_BUCKET, oldPath!);
+        const oldKey = formData.avatar.split('/').pop();
+        if (oldKey) {
+          await deleteImage(oldKey, 'avatars');
+        }
       }
 
-    } catch (error) {
-    console.error('Avatar upload failed:', error);
-    setError('Failed to update avatar. Please try again.');
+      await updateProfile({ avatar_url: publicUrl });
+
+      setFormData(f => ({ ...f, avatar: publicUrl }));
+    } catch (e: any) {
+      setError(e.message || 'Failed to upload avatar');
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const getAvailabilityColor = (availability: string): string => {
-    switch (availability) {
-      case 'Available': return 'bg-green-100 text-green-800';
-      case 'Busy': return 'bg-yellow-100 text-yellow-800';
-      case 'Not Available': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getGitHubUrl = (username: string): string => {
-    if (!username) return '';
-    const cleanUsername = username.trim();
-    if (cleanUsername.startsWith('http')) return cleanUsername;
-    // Remove @ symbol if present
-    const cleanedUsername = cleanUsername.replace(/^@/, '');
-    return `https://github.com/${cleanedUsername}`;
-  };
-
-  const getLinkedInUrl = (username: string): string => {
-    if (!username) return '';
-    const cleanUsername = username.trim();
-    if (cleanUsername.startsWith('http')) return cleanUsername;
-    // Remove @ symbol if present
-    const cleanedUsername = cleanUsername.replace(/^@/, '');
-    return `https://linkedin.com/in/${cleanedUsername}`;
-  };
-
-  const getPortfolioUrl = (url: string): string => {
-    if (!url) return '';
-    const cleanUrl = url.trim();
-    if (cleanUrl.startsWith('http')) return cleanUrl;
-    return `https://${cleanUrl}`;
-  };
-
-  const isUser = (data: any): data is User => {
-    return data && typeof data === 'object' && 'id' in data && 'email' in data;
-  };
+  if (!user) return <div>Loading...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-        <div className="flex items-center space-x-3">
-          {userData.github && syncGitHubRepos && (
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Profile</h1>
+        <div className="flex space-x-2">
+          {formData.github && (
             <Button
               variant="outline"
-              onClick={handleSyncGitHub}
+              onClick={async () => {
+                setSyncing(true);
+                await syncGitHubRepos?.();
+                setSyncing(false);
+              }}
               disabled={syncing}
               size="sm"
             >
-              <Sync className="h-4 w-4 mr-2" />
+              <Sync className="mr-1" />
               {syncing ? 'Syncing...' : 'Sync GitHub'}
             </Button>
           )}
           {!isEditing ? (
             <Button onClick={() => setIsEditing(true)}>
-              <Edit3 className="h-4 w-4 mr-2" />
-              Edit Profile
+              <Edit3 className="mr-1" />
+              Edit
             </Button>
           ) : (
-            <div className="flex space-x-2">
-              <Button onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Save
+            <>
+              <Button onClick={handleSave} disabled={isSaving}>
+                <Save className="mr-1" /> Save
               </Button>
-              <Button variant="ghost" onClick={handleCancel}>
-                <X className="h-4 w-4 mr-2" />
-                Cancel
+              <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                <X className="mr-1" /> Cancel
               </Button>
-            </div>
+            </>
           )}
         </div>
       </div>
 
+      {/* Error */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="text-sm text-red-600 font-medium">{error}</div>
-        </div>
+        <div className="mb-4 p-3 bg-red-100 text-red-700">{error}</div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 space-y-6">
-          {/* Basic Info Card */}
-          <Card className="p-6 text-center">
-            <div className="flex flex-col items-center space-y-4 mb-6">
-              <ImageUpload
-                currentImage={formData.avatar || ''}
-                onImageChange={handleAvatarChange}
-                onImageUpload={uploadAvatar}
-                loading={isUploading} 
-                className="w-32 h-32"
-                size="lg"
-                shape="circle"
-                label="Change Avatar"
-                accept="image/*"
-              />
-              {isEditing ? (
-                <Input
-                  value={formData.name}
-                  name="name"
-                  onChange={handleChange}
-                  className="text-center text-xl font-bold mb-2"
-                  placeholder="Enter your name"
-                  required
-                />
-              ) : (
-                <h2 className="text-xl font-bold text-gray-900 mb-2">{userData.name || 'Anonymous User'}</h2>
-              )}
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(userData.availability)}`}>{userData.availability}</span>
-              {userData.location && (
-                <div className="flex items-center justify-center text-gray-600">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  <span>{userData.location}</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              {userData.github && (
-                <a
-                  href={getGitHubUrl(userData.github)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <Github className="h-4 w-4 mr-2" />
-                  GitHub
-                </a>
-              )}
-              {userData.linkedin && (
-                <a
-                  href={getLinkedInUrl(userData.linkedin)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <Linkedin className="h-4 w-4 mr-2" />
-                  LinkedIn
-                </a>
-              )}
-              {userData.portfolio && (
-                <a
-                  href={getPortfolioUrl(userData.portfolio)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <Globe className="h-4 w-4 mr-2" />
-                  Portfolio
-                </a>
-              )}
-            </div>
-          </Card>
+      {/* Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left */}
+        <Card className="p-4 text-center">
+          <ImageUpload
+            currentImage={formData.avatar}
+            onImageChange={handleAvatarChange}
+            loading={isUploading}
+            label="Avatar"
+            accept="image/*" onImageUpload={function (): Promise<string | null> {
+              throw new Error('Function not implemented.');
+            } }          />
+          {isEditing ? (
+            <Input
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Name"
+            />
+          ) : (
+            <h2 className="text-xl font-semibold mt-2">
+              {formData.name}
+            </h2>
+          )}
+          <span className="inline-block mt-1 px-2 py-1 bg-green-100 rounded">
+            {formData.availability}
+          </span>
+          <div className="mt-2 flex justify-center text-gray-600">
+            <MapPin className="mr-1" />
+            {formData.location}
+          </div>
+        </Card>
 
-          {/* GitHub Integration */}
-          <GitHubIntegration />
-
-          {/* Badges - Only render if badges exist */}
-          {isUser(userData) && userData.badges && userData.badges.length > 0 && (() => {
-            const validUser = userData;
-            return (
-              <BadgeSystem 
-                user={validUser}
-                badges={validUser.badges}
-              />
-            );
-          })()}
-        </div>
-
-        <div className="lg:col-span-2 space-y-6">
-          {/* About Section */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">About</h3>
+        {/* Right */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* About */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-2">About</h3>
             {isEditing ? (
               <textarea
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
                 rows={4}
-                placeholder="Tell us about yourself..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-vertical"
+                className="w-full border rounded p-2"
               />
             ) : (
-              <p className="text-gray-600 whitespace-pre-wrap">{userData.bio || 'No bio provided yet.'}</p>
+              <p>{formData.bio}</p>
             )}
           </Card>
 
-          {/* Skills & Endorsements */}
-          <EndorsementSystem user={userData} canEndorse={false} />
-
-          {/* Professional Details */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Professional Details</h3>
-            <div className="grid md:grid-cols-2 gap-4">
+          {/* Professional */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-2">Professional Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Experience */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Experience Level
-                </label>
+                <label>Experience</label>
                 {isEditing ? (
                   <select
                     name="experience"
                     value={formData.experience}
                     onChange={handleChange}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full border rounded p-2"
                   >
-                    <option value="Junior">Junior</option>
-                    <option value="Mid-level">Mid-level</option>
-                    <option value="Senior">Senior</option>
-                    <option value="Lead">Lead</option>
+                    {['Junior','Mid-level','Senior','Lead'].map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
                   </select>
                 ) : (
-                  <p className="text-gray-600">{userData.experience || 'Not specified'}</p>
+                  <p>{formData.experience}</p>
                 )}
               </div>
 
+              {/* Availability */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Availability
-                </label>
+                <label>Availability</label>
                 {isEditing ? (
                   <select
                     name="availability"
                     value={formData.availability}
                     onChange={handleChange}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full border rounded p-2"
                   >
-                    <option value="Available">Available</option>
-                    <option value="Busy">Busy</option>
-                    <option value="Not Available">Not Available</option>
+                    {['Available','Busy','Not Available'].map(a => (
+                      <option key={a} value={a}>{a}</option>
+                    ))}
                   </select>
                 ) : (
-                  <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getAvailabilityColor(userData.availability)}`}>
-                    {userData.availability}
-                  </span>
+                  <p>{formData.availability}</p>
                 )}
               </div>
 
+              {/* Location */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
+                <label>Location</label>
                 {isEditing ? (
                   <Input
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
-                    placeholder="e.g., San Francisco, CA"
+                    placeholder="Location"
                   />
                 ) : (
-                  <p className="text-gray-600">{userData.location || 'Not specified'}</p>
+                  <p>{formData.location}</p>
                 )}
               </div>
 
+              {/* Hourly Rate */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hourly Rate (USD)
-                </label>
+                <label>Hourly Rate</label>
                 {isEditing ? (
                   <Input
                     type="number"
                     name="hourlyRate"
                     value={formData.hourlyRate}
                     onChange={handleChange}
-                    placeholder="50"
-                    min="0"
-                    step="0.01"
+                    placeholder="0.00"
                   />
                 ) : (
-                  <p className="text-gray-600">
-                    {userData.hourlyRate ? `$${userData.hourlyRate}/hour` : 'Not specified'}
-                  </p>
+                  <p>${formData.hourlyRate}/hr</p>
                 )}
               </div>
 
+              {/* Skills (only editing) */}
               {isEditing && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Skills
-                  </label>
+                  <label>Skills</label>
                   <Input
                     name="skills"
                     value={formData.skills}
                     onChange={handleChange}
-                    placeholder="React, Node.js, Python (comma-separated)"
+                    placeholder="Comma separated"
                   />
                 </div>
               )}
@@ -529,55 +321,48 @@ const handleSave = async () => {
           </Card>
 
           {/* Links */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Links</h3>
-            <div className="grid md:grid-cols-2 gap-4">
+          <Card className="p-4">
+            <h3 className="font-semibold mb-2">Links</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  GitHub Username
-                </label>
+                <label>GitHub Username</label>
                 {isEditing ? (
                   <Input
                     name="github"
                     value={formData.github}
                     onChange={handleChange}
-                    placeholder="username"
+                    placeholder="GitHub username"
                   />
                 ) : (
-                  <p className="text-gray-600">{userData.github || 'Not provided'}</p>
+                  <p>{formData.github}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  LinkedIn Username
-                </label>
+                <label>LinkedIn Username</label>
                 {isEditing ? (
                   <Input
                     name="linkedin"
                     value={formData.linkedin}
                     onChange={handleChange}
-                    placeholder="username"
+                    placeholder="LinkedIn username"
                   />
                 ) : (
-                  <p className="text-gray-600">{userData.linkedin || 'Not provided'}</p>
+                  <p>{formData.linkedin}</p>
                 )}
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Portfolio Website
-                </label>
+                <label>Portfolio URL</label>
                 {isEditing ? (
                   <Input
                     name="portfolio"
                     value={formData.portfolio}
                     onChange={handleChange}
-                    placeholder="https://yourportfolio.com"
-                    type="url"
+                    placeholder="https://..."
                   />
                 ) : (
-                  <p className="text-gray-600">{userData.portfolio || 'Not provided'}</p>
+                  <p>{formData.portfolio}</p>
                 )}
               </div>
             </div>
@@ -590,9 +375,3 @@ const handleSave = async () => {
 
 export default Profile;
 
-export interface AuthContextType {
-  user: User | null;
-  updateProfile: (profileData: any) => Promise<void>;
-  syncGitHubRepos: () => Promise<void>;
-  // ...other properties
-}
