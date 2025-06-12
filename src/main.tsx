@@ -4,6 +4,8 @@ import App from './App.tsx';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import './index.css';
+import 'flowbite';
+import 'flowbite-react/dist/flowbite.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

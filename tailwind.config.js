@@ -1,29 +1,13 @@
-export default {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,ts,jsx,tsx}",  // include all your app files
+    "./node_modules/flowbite-react/**/*.{js,jsx,ts,tsx}", // ✅ include Flowbite
   ],
   theme: {
-    extend: {
-      colors: {
-        brand: {
-          50: '#E6F6FF',
-          100: '#BAE3FF',
-          200: '#7CC4FA',
-          300: '#47A3F3',
-          400: '#2186EB',
-          500: '#0967D2',
-          600: '#0552B5',
-          700: '#03449E',
-          800: '#01337D',
-          900: '#002159',
-        },
-      },
-      fontFamily: {
-        heading: ['Inter', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
-      },
-    },
+    extend: {},
   },
-  plugins: [],
-}
+  plugins: [
+    require('flowbite/plugin') // ✅ add Flowbite plugin
+  ],
+};

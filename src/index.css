@@ -1,4 +1,11 @@
-/* @tailwind directives removed because Tailwind CSS is not being processed */
+/* @tailwind directives removed because they require Tailwind CSS processing */
+/* base styles, components, and utilities should be included via Tailwind's build process */
+
+@import 'flowbite';
+
+
+
+
 
 @layer base {
   :root {

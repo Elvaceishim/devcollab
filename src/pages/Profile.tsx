@@ -1,10 +1,9 @@
 // Profile.tsx
 import React, { useState, useEffect } from 'react';
+import { Button, Card } from 'flowbite-react';
 import { Edit3, Save, X, MapPin, FolderSync as Sync } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import Card from '../components/common/Card';
 import ImageUpload from '../components/common/ImageUpload';
 import { useImageUpload } from '../hooks/useImageUpload';
 import { supabase, deleteImage } from '@/lib/supabase';
@@ -156,7 +155,7 @@ const Profile: React.FC = () => {
         <div className="flex space-x-2">
           {formData.github && (
             <Button
-              variant="outline"
+              outline
               onClick={async () => {
                 setSyncing(true);
                 await syncGitHubRepos?.();
@@ -179,7 +178,7 @@ const Profile: React.FC = () => {
               <Button onClick={handleSave} disabled={isSaving}>
                 <Save className="mr-1" /> Save
               </Button>
-              <Button variant="ghost" onClick={() => setIsEditing(false)}>
+              <Button color="light" onClick={() => setIsEditing(false)}>
                 <X className="mr-1" /> Cancel
               </Button>
             </>
@@ -375,6 +374,10 @@ const Profile: React.FC = () => {
           </Card>
         </div>
       </div>
+      <Button>Save</Button>
+      <Card>
+        {/* content */}
+      </Card>
     </div>
   );
 };
