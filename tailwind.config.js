@@ -11,5 +11,3 @@ module.exports = {
     require('flowbite/plugin') // ✅ add Flowbite plugin
   ],
 }
-
-import 'flowbite/dist/flowbite.css'; // ✅ Correct import
